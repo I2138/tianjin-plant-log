@@ -54,18 +54,41 @@
     </div>`;
   }
 
+  function authLinksHTML() {
+    const links = AUTHORITY_LINKS[tab] || [];
+    if (!links.length) return '';
+    return `<div class="auth-zone">
+      <div class="az-head">
+        <span class="az-badge">官方</span>
+        <span class="az-title">权威科普资源</span>
+        <span class="az-tip">真实站点 · 新窗口打开</span>
+      </div>
+      ${links.map(l => `
+        <a class="az-link" href="${l.url}" target="_blank" rel="noopener noreferrer">
+          <div class="az-body">
+            <div class="az-name">${esc(l.name)}</div>
+            <div class="az-desc">${esc(l.desc)}</div>
+          </div>
+          <span class="az-url">${esc(l.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</span>
+          <span class="az-arrow">${icon('link')}</span>
+        </a>`).join('')}
+    </div>`;
+  }
+
   function renderList() {
     const list = ARTICLES.filter(a => a.tab === tab);
+    const authHTML = authLinksHTML();
     if (!list.length) {
-      $('#artList').innerHTML = `<div class="card card-pad" style="margin-top:4px">
-        ${emptyStateHTML({
-          title: '该分类内容筹备中',
-          desc: '「四季植物专题」正在组稿，\n先去其他分类逛逛吧。',
-          btnIcon: 'book',
-        })}</div>`;
+      $('#artList').innerHTML = `${authHTML}
+        <div class="card card-pad" style="margin-top:14px">
+          ${emptyStateHTML({
+            title: '该分类内容筹备中',
+            desc: '「四季植物专题」正在组稿，\n可先浏览上方权威资源。',
+            btnIcon: 'book',
+          })}</div>`;
       return;
     }
-    $('#artList').innerHTML = list.map(cardHTML).join('');
+    $('#artList').innerHTML = authHTML + list.map(cardHTML).join('');
     $$('#artList .article-card').forEach(card => {
       const a = ARTICLES.find(x => x.id === card.dataset.id);
       mountImg($('.ac-cover .img-box', card), plantCover(a.cover), { delay: 280 });
