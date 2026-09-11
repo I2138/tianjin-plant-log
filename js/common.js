@@ -224,7 +224,7 @@ function navigate(url, text) {
   setTimeout(() => { location.href = url; }, 430);
 }
 document.addEventListener('click', e => {
-  const a = e.target.closest('a[data-nav]');
+  const a = e.target.closest('[data-nav]');
   if (a) { e.preventDefault(); navigate(a.dataset.nav || a.getAttribute('href'), a.dataset.navText); }
 });
 
