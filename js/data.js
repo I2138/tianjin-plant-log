@@ -667,6 +667,18 @@ const BADGES = [
   { id: 'b6', name: '河岸卫士', desc: '在海河及主要河道沿岸提交 10 条记录', icon: 'water', unlocked: false, date: '' },
   { id: 'b7', name: '社区新星', desc: '观察记录累计获赞 100 次', icon: 'heart', unlocked: false, date: '' },
   { id: 'b8', name: '百点漫游', desc: '累计打卡 100 个观测点位', icon: 'map', unlocked: false, date: '' },
+  { id: 'b9', name: '十种图鉴', desc: '记录满 10 种不同植物', icon: 'leaf', unlocked: false, date: '' },
+  { id: 'b10', name: '勤记录者', desc: '累计提交 30 条观察日志', icon: 'edit', unlocked: false, date: '' },
+  { id: 'b11', name: '春花使者', desc: '在春季记录 5 种开花植物', icon: 'star', unlocked: false, date: '' },
+  { id: 'b12', name: '秋叶猎人', desc: '在秋季记录 5 种变色叶植物', icon: 'leaf', unlocked: false, date: '' },
+  { id: 'b13', name: '古树守护者', desc: '探访 3 棵百年古树名木', icon: 'pin', unlocked: false, date: '' },
+  { id: 'b14', name: '科普传播者', desc: '发布 5 篇植物科普文章', icon: 'edit', unlocked: false, date: '' },
+  { id: 'b15', name: '绿化先锋', desc: '提交 10 条绿化问题上报', icon: 'alert', unlocked: false, date: '' },
+  { id: 'b16', name: '任务达人', desc: '完成 5 个观察任务', icon: 'success', unlocked: false, date: '' },
+  { id: 'b17', name: '生态 Mapping', desc: '在 5 个不同行政区留下记录', icon: 'map', unlocked: false, date: '' },
+  { id: 'b18', name: '月度全勤', desc: '单月内连续 4 周都有观察记录', icon: 'heart', unlocked: false, date: '' },
+  { id: 'b19', name: '物种专家', desc: '对同一种植物记录 5 次以上', icon: 'eye', unlocked: false, date: '' },
+  { id: 'b20', name: '津城植物通', desc: '记录满 30 种不同植物', icon: 'medal', unlocked: false, date: '' },
 ];
 
 /* ---------------- 上报问题类型 ---------------- */

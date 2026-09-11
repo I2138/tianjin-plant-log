@@ -20,9 +20,8 @@
 
 <div class="page">
   <div class="card card-pad mt-12 flex" style="gap:12px">
-    <span style="color:var(--exotic);display:flex">${icon('medal')}</span>
     <div style="flex:1">
-      <div class="fz-14 bold">已解锁 <span id="unlockedCount" style="color:var(--exotic)">0</span> / 8 枚</div>
+      <div class="fz-14 bold">已解锁 <span id="unlockedCount" style="color:var(--exotic)">0</span> / <span id="totalCount">8</span> 枚</div>
       <div class="fz-12 text-2 mt-8">持续观察、打卡点位、参与任务，即可解锁更多勋章</div>
     </div>
   </div>
@@ -45,6 +44,7 @@
       <div class="skeleton sk-text" style="width:48px;height:12px;margin:0 auto"></div>
     </div>`).join('');
   document.querySelector('.card .fz-14').innerHTML = `已解锁 <span id="unlockedCount" style="color:var(--exotic)">0</span> / ${BADGES.length} 枚`;
+  document.getElementById('totalCount') && (document.getElementById('totalCount').textContent = BADGES.length);
 
   setTimeout(() => {
     const unlocked = BADGES.filter(b => b.unlocked).length;
