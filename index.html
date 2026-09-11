@@ -102,8 +102,9 @@
 
   /* ---------------- 状态 ---------------- */
   const state = { type: '', attr: '', season: '', region: '', kw: '' };
-  /* 首页展示全部物种 */
-  const HOME_LIST = PLANTS;
+  /* 首页隐藏前 6 个物种（国槐/垂柳/白蜡/西府海棠/月季/金叶女贞，用户端显示为占位，要求移除） */
+  const HOME_HIDDEN_IDS = [1, 2, 3, 4, 5, 6];
+  const HOME_LIST = PLANTS.filter(p => !HOME_HIDDEN_IDS.includes(p.id));
   let shown = 0;          // 无限滚动已显示数
   const PAGE_SIZE = 12;
   let filtered = [];
