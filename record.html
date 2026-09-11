@@ -35,8 +35,9 @@
 
   <form id="recordForm" class="hidden" novalidate onsubmit="return false">
 
-    <!-- 图片上传 -->
-    <div class="section-title"><span class="st-bar"></span>现场照片<span class="st-more">最多 9 张</span></div>
+    <!-- 图片上传（真实文件选择：电脑弹资源管理器，手机弹相册/相机） -->
+    <div class="section-title"><span class="st-bar"></span>现场照片<span class="st-more">最多 9 张 · 支持拍照与相册</span></div>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
     <div class="upload-zone">
       <button type="button" class="upload-btn" id="btnCamera"><span id="camIcon"></span>拍照上传</button>
       <button type="button" class="upload-btn" id="btnAlbum"><span id="albIcon"></span>从相册选择</button>
@@ -120,8 +121,9 @@
 
   /* ---------------- 状态 ---------------- */
   const form = {
-    photoSeeds: [],      // 已上传图片 seed
+    photoSeeds: [],      // 已上传图片序号（兼容旧逻辑）
     failedSeeds: [],
+    photos: [],          // 真实图片 dataURL
     plantId: null, plantName: '', family: '',
     place: '', coords: '',
     stage: '', health: '', note: '', habitats: [],
@@ -135,92 +137,114 @@
     form.habitats = $$('#habitatTags .check-tag.on').map(x => x.dataset.h);
   }));
 
-  /* ---------------- 图片上传（模拟进度条 + 随机失败） ---------------- */
-  function uploadPhotos(n) {
-    const list = $('#uploadList');
-    const base = form.photoSeeds.length + form.failedSeeds.length;
-    const items = [];
-    for (let i = 0; i < n; i++) {
-      const seed = base + i + 1;
-      const fail = Math.random() < 0.14;
-      const el = document.createElement('div');
-      el.className = 'upload-item';
-      el.innerHTML = `<div class="up-box">
-          ${imgBoxHTML()}
-          <div class="up-mask"><span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div></div>
-        </div>
-        <button type="button" class="up-del">${icon('close')}</button>
-        <div class="up-fail-tip hidden">上传失败</div>`;
-      list.appendChild(el);
-      items.push({ el, seed, fail });
-    }
-    items.forEach((it, idx) => runUpload(it, idx * 260));
+  /* ---------------- 真实文件选择（电脑资源管理器 / 手机相册·相机） ---------------- */
+  const fileInput = $('#fileInput');
+  $('#btnAlbum').addEventListener('click', () => {
+    fileInput.removeAttribute('capture');
+    fileInput.multiple = true;
+    fileInput.value = '';
+    fileInput.click();
+  });
+  $('#btnCamera').addEventListener('click', () => {
+    /* 手机上直接唤起相机；电脑上等同选择文件 */
+    fileInput.setAttribute('capture', 'environment');
+    fileInput.multiple = false;
+    fileInput.value = '';
+    fileInput.click();
+  });
+
+  /* 图片压缩：最大边 1000px，JPEG 0.78（兼顾清晰度与 localStorage 容量） */
+  function compressImage(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1000;
+          let { width: w, height: h } = img;
+          if (w > MAX || h > MAX) {
+            const r = Math.min(MAX / w, MAX / h);
+            w = Math.round(w * r); h = Math.round(h * r);
+          }
+          const cv = document.createElement('canvas');
+          cv.width = w; cv.height = h;
+          cv.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(cv.toDataURL('image/jpeg', 0.78));
+        };
+        img.onerror = () => resolve(null);
+        img.src = reader.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
   }
 
-  function runUpload(it, delay) {
-    const bar = $('.progress-bar', it.el), pct = $('.up-pct', it.el);
+  fileInput.addEventListener('change', async () => {
+    const files = [...fileInput.files].filter(f => f.type.startsWith('image/'));
+    if (!files.length) return;
+    const room = 9 - form.photos.length - form.failedSeeds.length;
+    if (room <= 0) { showToast('最多上传 9 张照片'); return; }
+    const use = files.slice(0, room);
+    if (files.length > room) showToast(`最多 9 张，已选取前 ${room} 张`);
+    for (const f of use) {
+      const dataURL = await compressImage(f);
+      if (!dataURL) { showToast(`「${f.name}」读取失败，请换一张试试`); continue; }
+      addUploadItem(dataURL, f.name);
+    }
+    fileInput.value = '';
+  });
+
+  /* 新增上传卡片：进度条动画 + 真实图片 */
+  function addUploadItem(dataURL, name) {
+    const list = $('#uploadList');
+    const el = document.createElement('div');
+    el.className = 'upload-item';
+    el.innerHTML = `<div class="up-box">
+        <div class="img-box"><img alt=""></div>
+        <div class="up-mask"><span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div></div>
+      </div>
+      <button type="button" class="up-del" title="${esc(name || '')}">${icon('close')}</button>`;
+    list.appendChild(el);
+    const bar = $('.progress-bar', el), pct = $('.up-pct', el), mask = $('.up-mask', el);
+    const img = $('.img-box img', el);
     let p = 0;
-    setTimeout(() => {
-      const timer = setInterval(() => {
-        p = Math.min(100, p + 4 + Math.random() * 9);
-        bar.style.width = p + '%';
-        pct.textContent = Math.round(p) + '%';
-        if (p >= 100) {
-          clearInterval(timer);
-          const mask = $('.up-mask', it.el);
-          if (it.fail) {
-            if (mask) mask.remove();
-            const box = $('.img-box', it.el);
-            box.classList.add('failed');
-            box.querySelector('.retry-btn').textContent = '重新上传';
-            $('.up-fail-tip', it.el).classList.remove('hidden');
-            box.querySelector('.retry-btn').onclick = e => {
-              e.stopPropagation();
-              box.classList.remove('failed');
-              $('.up-fail-tip', it.el).classList.add('hidden');
-              const m2 = document.createElement('div');
-              m2.className = 'up-mask';
-              m2.innerHTML = '<span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div>';
-              $('.up-box', it.el).insertBefore(m2, box);
-              it.fail = false;
-              runUpload(it, 0);
-            };
-            form.failedSeeds.push(it.seed);
-            return;
-          }
-          if (mask) { mask.style.opacity = '0'; setTimeout(() => mask.remove(), 300); }
-          mountImg($('.img-box', it.el), plantPhoto(form.plantId || 3, it.seed), { delay: 120 });
-          if (!form.photoSeeds.includes(it.seed)) form.photoSeeds.push(it.seed);
-          bindThumbClick(it.el);
-          scheduleAI();
-        }
-      }, 90);
-    }, delay + 300);
+    const timer = setInterval(() => {
+      p = Math.min(100, p + 6 + Math.random() * 12);
+      bar.style.width = p + '%';
+      pct.textContent = Math.round(p) + '%';
+      if (p >= 100) {
+        clearInterval(timer);
+        mask.style.opacity = '0';
+        setTimeout(() => mask.remove(), 300);
+        img.src = dataURL;
+        $('.img-box', el).classList.add('done');
+        form.photos.push(dataURL);
+        form.photoSeeds.push(form.photoSeeds.length + 1);
+        bindThumbClick(el);
+        scheduleAI();
+      }
+    }, 80);
   }
 
   function bindThumbClick(el) {
     if (el._thumbBound) return;
     el._thumbBound = true;
     $('.up-box', el).addEventListener('click', () => {
-      const done = $$('#uploadList .upload-item').filter(x => !$('.up-mask', x) && !$('.img-box.failed', x));
-      if (!done.length) return;
-      showImagePreview(done.map((d, i) => ({ src: plantPhoto(form.plantId || 3, i + 1), caption: '现场照片 · 点击左右切换' })));
+      if (!form.photos.length) return;
+      showImagePreview(form.photos.map(src => ({ src, caption: '现场照片 · 点击左右切换' })));
     });
   }
 
-  $$('#uploadList').forEach(l => l.addEventListener('click', e => {
+  $('#uploadList').addEventListener('click', e => {
     const del = e.target.closest('.up-del');
     if (del) {
       const item = del.closest('.upload-item');
       const idx = [...item.parentElement.children].indexOf(item);
-      if (form.photoSeeds[idx] !== undefined) form.photoSeeds.splice(idx, 1);
+      if (form.photos[idx] !== undefined) { form.photos.splice(idx, 1); form.photoSeeds.splice(idx, 1); }
       item.style.opacity = '0';
       setTimeout(() => item.remove(), 200);
     }
-  }));
-
-  $('#btnCamera').addEventListener('click', () => uploadPhotos(1));
-  $('#btnAlbum').addEventListener('click', () => uploadPhotos(2 + Math.floor(Math.random() * 3)));
+  });
 
   /* ---------------- AI 识别模拟 ---------------- */
   let aiTimer = null;
@@ -230,20 +254,19 @@
   }
 
   function startAI() {
-    if (aiRunning || !form.photoSeeds.length) return;
+    if (aiRunning || !form.photos.length) return;
     aiRunning = true;
     $('#aiBadge').textContent = '识别中';
-    const target = PLANTS[(form.photoSeeds[0] * 5 + form.photoSeeds.length * 3) % PLANTS.length];
+    const target = PLANTS[(form.photos.length * 5 + form.photoSeeds.length * 3) % PLANTS.length];
     const fail = Math.random() < 0.18;
     $('#aiArea').innerHTML = `
       <div class="ai-scanning">
-        <div class="ai-scan-box">${imgBoxHTML()}</div>
+        <div class="ai-scan-box"><img src="${form.photos[0]}" alt=""></div>
         <div style="flex:1">
           <div class="fz-14 bold" style="color:var(--primary-dark)">AI 识别中…</div>
           <div class="fz-12 text-2 mt-8">正在分析叶片纹理与花器特征</div>
         </div>
       </div>`;
-    mountImg($('#aiArea .img-box'), plantPhoto(target.id, form.photoSeeds[0]), { delay: 150 });
     setTimeout(() => {
       aiRunning = false;
       if (fail) {
@@ -268,6 +291,21 @@
     form.plantId = target ? target.id : null;
     form.plantName = target ? target.name : '';
     form.family = target ? target.family : '';
+    /* 手动录入模式：可直接输入；AI 识别成功：锁定展示 + 修正申请入口 */
+    const nameField = manual
+      ? `<div class="form-group" style="margin:12px 0 0" data-field="plant">
+          <div class="form-label">物种名称（手动录入）<span class="req">*</span></div>
+          <input class="form-input" id="plantNameInput" value="${esc(form.plantName)}" placeholder="请输入物种名称">
+          <div class="form-error-tip">请填写物种名称</div>
+        </div>`
+      : `<div class="form-group" style="margin:12px 0 0" data-field="plant">
+          <div class="form-label">识别结果（如有误可提交修正申请）<span class="req">*</span></div>
+          <div class="ai-locked">
+            <span class="ai-locked-name" id="plantNameShow">${esc(form.plantName) || '待识别'}</span>
+            <button type="button" class="btn btn-soft btn-sm" id="btnCorrection">${icon('edit').replace('22" height="22', '13" height="13"')} 修正申请</button>
+          </div>
+          <div class="ai-corr-status hidden" id="corrStatus"></div>
+        </div>`;
     $('#aiArea').innerHTML = `
       ${target ? `
       <div class="ai-result">
@@ -279,13 +317,64 @@
           <span class="tag ${attrClass(target.attr)}">${attrLabel(target.attr)}</span>
         </div>
       </div>` : `<div class="ai-fail" style="background:var(--bg-soft);color:var(--text-2)"><span style="flex:none;display:flex">${icon('edit')}</span>已切换为手动录入模式</div>`}
-      <div class="form-group" style="margin:12px 0 0" data-field="plant">
-        <div class="form-label">物种名称（可修改校正）<span class="req">*</span></div>
-        <input class="form-input" id="plantNameInput" value="${esc(form.plantName)}" placeholder="请输入或校正物种名称">
-        <div class="form-error-tip">请填写物种名称</div>
-      </div>`;
+      ${nameField}`;
     const input = $('#plantNameInput');
-    input.addEventListener('input', () => form.plantName = input.value.trim());
+    if (input) input.addEventListener('input', () => form.plantName = input.value.trim());
+    const corrBtn = $('#btnCorrection');
+    if (corrBtn) corrBtn.addEventListener('click', openCorrectionSheet);
+    renderCorrStatus();
+  }
+
+  /* ---------------- 物种名称修正申请 ---------------- */
+  function myCorrections() { return UD.get('corrections', []); }
+
+  function openCorrectionSheet() {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    const current = form.plantName || '待识别';
+    const { close, panel } = showSheet('物种名称修正申请', `
+      <div class="corr-tip">识别结果与实际不符？填写建议名称与理由，提交后由植物学志愿者审核，审核通过将更新记录并通知你。</div>
+      <div class="form-group">
+        <div class="form-label">当前识别结果</div>
+        <input class="form-input" value="${esc(current)}" disabled>
+      </div>
+      <div class="form-group">
+        <div class="form-label">建议修正为<span class="req">*</span></div>
+        <input class="form-input" id="corrName" maxlength="20" placeholder="请输入正确的物种名称">
+      </div>
+      <div class="form-group">
+        <div class="form-label">修正理由<span class="req">*</span></div>
+        <textarea class="form-textarea" id="corrReason" maxlength="120" placeholder="例如：叶为羽状复叶、果实念珠状荚果，更符合国槐特征"></textarea>
+      </div>
+      <button type="button" class="btn btn-primary btn-block mt-8" id="corrSubmit">提交修正申请</button>`);
+    panel.querySelector('#corrSubmit').addEventListener('click', () => {
+      const name = panel.querySelector('#corrName').value.trim();
+      const reason = panel.querySelector('#corrReason').value.trim();
+      if (!name) { showToast('请填写建议修正的物种名称'); return; }
+      if (!reason) { showToast('请填写修正理由'); return; }
+      if (name === current) { showToast('建议名称与当前识别一致，无需修正'); return; }
+      const list = myCorrections();
+      list.unshift({
+        id: 'c' + Date.now().toString(36),
+        from: current, to: name, reason,
+        plantId: form.plantId, time: _nowFull(),
+        status: 'pending',
+      });
+      UD.set('corrections', list);
+      close();
+      showToast('修正申请已提交，等待审核');
+      renderCorrStatus();
+    });
+  }
+
+  function renderCorrStatus() {
+    const box = $('#corrStatus');
+    if (!box) return;
+    const mine = myCorrections().filter(c => c.from === form.plantName);
+    if (!mine.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    const c = mine[0];
+    const st = { pending: ['审核中', 'soft'], approved: ['已通过', 'native'], rejected: ['未通过', 'invasive'] }[c.status] || ['审核中', 'soft'];
+    box.classList.remove('hidden');
+    box.innerHTML = `<span class="tag ${st[1]}">修正申请 · ${st[0]}</span> 建议「${esc(c.from)}」→「${esc(c.to)}」 · ${esc(c.time)}`;
   }
 
   /* ---------------- 定位 ---------------- */
@@ -382,6 +471,7 @@
       form.stage = d.stage || ''; form.health = d.health || ''; form.note = d.note || '';
       form.habitats = d.stage2 ? [d.stage2] : [];
       showAIResult(getPlant(d.plantId) || null, !d.plantId);
+      (d.photos || []).forEach(src => addUploadItem(src, '草稿照片'));
       if (form.place) fillLocation(form.place, form.coords);
       $('#fsStage .fake-select').dataset.value = form.stage;
       $('#fsStage .fs-text').textContent = form.stage || '请选择生长阶段';
@@ -406,6 +496,7 @@
         plantId: form.plantId, plantName: form.plantName, family: form.family,
         place: form.place, coords: form.coords, stage: fsValue('stage'), health: fsValue('health'),
         note: $('#noteInput').value, photoSeeds: form.photoSeeds.slice(0, 3),
+        photos: form.photos.slice(0, 3),
         stage2: form.habitats[0] || '', time: _nowFull(),
       };
       if (draftId) {
@@ -442,7 +533,7 @@
     if (missing.length) {
       $$('#recordForm .form-group').forEach(g => g.classList.remove('error'));
       if (!form.plantName) $('#recordForm [data-field="plant"]')?.classList.add('error');
-      if (!form.stage) $('#recordForm [data-field="stage"]').classList.add('error');
+      if (!form.stage) $('#recordForm [data-field="stage"]')?.classList.add('error');
       showModal({
         icon: 'error', title: '还有必填项未完成',
         content: missing.map(m => '· ' + m).join('\n'),
@@ -457,7 +548,9 @@
         plantId: form.plantId, plantName: form.plantName, family: form.family,
         place: form.place, coords: form.coords || '117.2000°E, 39.1200°N',
         stage: form.stage, health: form.health || '健康', note: form.note || '（无备注）',
-        habitats: form.habitats, photoSeeds: form.photoSeeds.length ? form.photoSeeds : [1, 2],
+        habitats: form.habitats,
+        photos: form.photos.slice(0, 6),
+        photoSeeds: form.photoSeeds.length ? form.photoSeeds : [1, 2],
         time: _nowFull(), taskId: qs('task') || null,
       });
       if (draftId) DB.removeDraft(draftId);
