@@ -9,92 +9,71 @@ function debounce(fn, ms) { let t; return function (...a) { clearTimeout(t); t =
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function icon(name) { return ICONS[name] || ''; }
 
-/* ---------------- 天津导航风格矢量地图 SVG ---------------- */
+/* ---------------- 天津导航风格矢量地图 SVG（百度地图风格） ---------------- */
 const TJ_MAP_SVG = `
 <svg class="tj-shape" viewBox="0 0 1000 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="tjland" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FBF9F4"/><stop offset="1" stop-color="#F6F3EC"/>
-    </linearGradient>
     <filter id="tjsoft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#C9C2B2" flood-opacity=".45"/>
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2.4" flood-color="#C4BCA9" flood-opacity=".5"/>
     </filter>
   </defs>
 
-  <!-- 底板：邻接地界 -->
-  <rect width="1000" height="760" fill="#EFECE4"/>
-  <path d="M0 0 H340 V70 H0 Z M0 640 H300 V760 H0 Z M700 0 H1000 V120 H700 Z M640 700 H1000 V760 H640 Z" fill="#EAE6DB" opacity=".65"/>
-  <path d="M60 120 L210 150 M80 240 L180 260 M60 520 L200 560 M740 80 L880 110 M720 600 L880 640" stroke="#E2DCCE" stroke-width="2.5" opacity=".7"/>
-  <text x="86" y="86" font-size="13" fill="#C0B9A8" letter-spacing="6">北京方向</text>
-  <text x="796" y="726" font-size="13" fill="#C0B9A8" letter-spacing="6">沧州方向</text>
-  <text x="792" y="52" font-size="13" fill="#C0B9A8" letter-spacing="6">唐山方向</text>
-  <text x="52" y="712" font-size="13" fill="#C0B9A8" letter-spacing="6">廊坊方向</text>
+  <!-- ① 底板：邻接地界（米白纸面） -->
+  <rect width="1000" height="760" fill="#F2EFE8"/>
+  <path d="M0 0 H336 V66 H0 Z M0 646 H296 V760 H0 Z M694 0 H1000 V118 H694 Z M642 702 H1000 V760 H642 Z" fill="#EBE7DD" opacity=".8"/>
+  <g stroke="#E3DED2" stroke-width="2" opacity=".8">
+    <path d="M52 118 L206 148"/><path d="M74 236 L182 258"/><path d="M58 520 L198 556"/>
+    <path d="M742 82 L884 112"/><path d="M722 600 L878 640"/><path d="M60 392 L150 410"/>
+  </g>
+  <g font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="#BDB5A2" font-size="12.5" letter-spacing="5">
+    <text x="78" y="88">北京方向</text>
+    <text x="790" y="48">唐山方向</text>
+    <text x="786" y="728">沧州方向</text>
+    <text x="48" y="712">廊坊方向</text>
+  </g>
 
-  <!-- 天津市域 -->
+  <!-- ② 天津市域主体 -->
   <path d="M390 55 L450 35 L505 60 L530 105 L560 130 L625 150 L700 165 L760 195 L810 240 L845 300 L870 370 L860 430 L885 500 L875 570 L830 640 L760 690 L660 720 L540 735 L420 730 L320 705 L255 650 L225 570 L235 490 L265 420 L255 350 L295 275 L335 205 L355 130 Z"
-    fill="url(#tjland)" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" filter="url(#tjsoft)"/>
-  <path d="M390 55 L450 35 L505 60 L530 105 L560 130 L625 150 L700 165 L760 195 L810 240 L845 300 L870 370 L860 430 L885 500 L875 570 L830 640 L760 690 L660 720 L540 735 L420 730 L320 705 L255 650 L225 570 L235 490 L265 420 L255 350 L295 275 L335 205 L355 130 Z"
-    fill="none" stroke="#DDD6C6" stroke-width="1.6" stroke-linejoin="round"/>
+    fill="#FAF8F2" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round" filter="url(#tjsoft)"/>
+  <path d="M390 55 L450 35 L505 60 L530 105 L560 130 L625 150 L700 165 L760 195 L810 240 L845 300 L870 370 L860 430 L885 500 L875 570 L830 640 L760 690 L660 720 L540 735 L420 730 L320 705 L255 650 L225 570 Z M225 570 L235 490 L265 420 L255 350 L295 275 L335 205 L355 130 Z"
+    fill="none" stroke="#E0D9C8" stroke-width="1.6" stroke-linejoin="round"/>
 
-  <!-- 区县分界（示意） -->
-  <g stroke="#E6E0D2" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9">
-    <path d="M370 348 C420 332 500 328 552 348"/>
-    <path d="M370 452 C430 468 500 468 556 452"/>
-    <path d="M408 332 C402 380 404 420 410 456"/>
-    <path d="M556 340 C562 384 562 420 556 452"/>
-    <path d="M332 210 C380 260 420 300 448 332"/>
-    <path d="M560 200 C540 250 530 300 528 336"/>
-    <path d="M660 180 C640 240 620 300 600 350"/>
-    <path d="M320 480 C360 520 390 560 400 600"/>
-    <path d="M560 460 C560 510 552 552 540 590"/>
-    <path d="M760 240 C726 300 700 360 678 420"/>
-    <path d="M700 300 C740 350 770 400 786 460"/>
+  <!-- ③ 区县分界（白色分隔线，百度风格） -->
+  <g stroke="#FFFFFF" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".95">
+    <path d="M368 346 C424 330 500 328 554 348"/>
+    <path d="M368 454 C430 470 502 470 558 452"/>
+    <path d="M406 330 C400 380 402 420 408 458"/>
+    <path d="M558 340 C564 384 564 420 558 452"/>
+    <path d="M330 208 C378 258 420 300 448 330"/>
+    <path d="M562 198 C542 250 532 300 530 336"/>
+    <path d="M662 178 C642 240 622 300 602 350"/>
+    <path d="M318 480 C358 520 390 560 400 600"/>
+    <path d="M562 460 C562 510 554 552 542 590"/>
+    <path d="M762 238 C728 300 702 360 680 420"/>
+    <path d="M702 298 C742 350 772 400 788 460"/>
+    <path d="M470 600 C520 590 570 586 616 590"/>
+  </g>
+  <g stroke="#E6E0D0" stroke-width="1" fill="none" opacity=".8">
+    <path d="M368 346 C424 330 500 328 554 348"/>
+    <path d="M368 454 C430 470 502 470 558 452"/>
   </g>
 
-  <!-- 城市建成区 -->
-  <path d="M382 342 C440 326 540 330 578 352 C600 368 602 428 580 448 C540 472 420 470 388 448 C366 428 362 364 382 342 Z" fill="#ECE8DE" opacity=".9"/>
-  <g fill="#F3F0E8">
-    <rect x="398" y="360" width="26" height="16" rx="2"/><rect x="432" y="360" width="20" height="16" rx="2"/>
-    <rect x="460" y="360" width="28" height="16" rx="2"/><rect x="496" y="360" width="22" height="16" rx="2"/>
-    <rect x="526" y="360" width="24" height="16" rx="2"/><rect x="404" y="386" width="20" height="14" rx="2"/>
-    <rect x="432" y="386" width="30" height="14" rx="2"/><rect x="470" y="386" width="24" height="14" rx="2"/>
-    <rect x="502" y="386" width="26" height="14" rx="2"/><rect x="398" y="410" width="26" height="14" rx="2"/>
-    <rect x="432" y="410" width="20" height="14" rx="2"/><rect x="460" y="410" width="28" height="14" rx="2"/>
-    <rect x="496" y="410" width="22" height="14" rx="2"/><rect x="526" y="410" width="18" height="14" rx="2"/>
-    <rect x="408" y="434" width="30" height="12" rx="2"/><rect x="446" y="434" width="24" height="12" rx="2"/>
-    <rect x="478" y="434" width="28" height="12" rx="2"/><rect x="514" y="434" width="20" height="12" rx="2"/>
+  <!-- ④ 水系（河流双色调 + 湖库） -->
+  <g stroke="#A9CAE6" stroke-width="7.5" fill="none" stroke-linecap="round">
+    <path d="M404 430 C432 448 456 462 480 468 C504 474 524 482 550 494 C580 508 614 502 648 488 C692 470 744 454 794 462 C832 468 858 462 880 468"/>
+    <path d="M354 300 C376 342 392 386 404 428"/>
+    <path d="M300 502 C330 486 368 470 404 436"/>
+    <path d="M250 562 C298 546 350 530 402 434"/>
+    <path d="M298 422 C380 396 460 374 540 354 C620 334 700 314 782 298"/>
+    <path d="M560 250 C612 270 662 286 716 296"/>
+    <path d="M444 130 C492 162 542 192 602 226 C652 254 684 280 714 300"/>
+    <path d="M262 602 C332 616 402 622 470 616 C532 611 584 606 624 600"/>
   </g>
-
-  <!-- 绿地公园 -->
-  <g fill="#D5E3C3">
-    <path d="M415 42 C428 32 452 32 464 42 C474 50 470 64 456 70 C442 76 422 70 416 58 C412 50 412 46 415 42 Z"/>
-    <ellipse cx="418" cy="406" rx="17" ry="11"/>
-    <ellipse cx="482" cy="416" rx="13" ry="8"/>
-    <ellipse cx="560" cy="440" rx="15" ry="9"/>
-    <ellipse cx="802" cy="520" rx="24" ry="14"/>
-    <ellipse cx="350" cy="602" rx="21" ry="12"/>
-    <ellipse cx="600" cy="420" rx="12" ry="7"/>
-    <path d="M660 160 C690 150 730 152 750 166 C762 176 758 192 742 198 C718 206 682 200 668 188 C658 178 656 166 660 160 Z" opacity=".85"/>
+  <g stroke="#D6E8F4" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <path d="M404 430 C432 448 456 462 480 468 C504 474 524 482 550 494 C580 508 614 502 648 488 C692 470 744 454 794 462 C832 468 858 462 880 468"/>
+    <path d="M444 130 C492 162 542 192 602 226 C652 254 684 280 714 300"/>
   </g>
-
-  <!-- 水系：河流 -->
-  <g stroke="#A9CBE3" stroke-width="6.5" fill="none" stroke-linecap="round" opacity=".92">
-    <path d="M405 432 C430 448 452 462 478 468 C502 474 522 482 548 494 C578 508 612 502 646 488 C690 470 742 454 792 462 C830 468 856 462 878 468"/>
-    <path d="M355 302 C375 342 392 386 405 430"/>
-    <path d="M302 502 C332 486 370 470 405 438"/>
-    <path d="M252 562 C300 546 352 530 405 436"/>
-    <path d="M300 424 C380 398 460 376 540 356 C620 336 700 316 782 300"/>
-    <path d="M562 252 C612 272 662 286 716 296"/>
-    <path d="M446 132 C492 162 542 192 602 226 C652 254 682 280 712 300"/>
-    <path d="M265 602 C332 616 402 622 470 616 C532 611 582 606 622 600"/>
-  </g>
-  <g stroke="#D6E8F2" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9">
-    <path d="M405 432 C430 448 452 462 478 468 C502 474 522 482 548 494 C578 508 612 502 646 488 C690 470 742 454 792 462 C830 468 856 462 878 468"/>
-    <path d="M446 132 C492 162 542 192 602 226 C652 254 682 280 712 300"/>
-  </g>
-
-  <!-- 水系：湖库 -->
-  <g fill="#B7D5E8" stroke="#97BBD6" stroke-width="1.2">
+  <g fill="#AFD0EA" stroke="#98BCDA" stroke-width="1.2">
     <ellipse cx="470" cy="102" rx="46" ry="18"/>
     <ellipse cx="742" cy="248" rx="46" ry="20"/>
     <ellipse cx="378" cy="588" rx="42" ry="18"/>
@@ -102,64 +81,128 @@ const TJ_MAP_SVG = `
     <ellipse cx="612" cy="436" rx="15" ry="9"/>
   </g>
 
-  <!-- 道路：高速（白路面 + 浅壳描边） -->
-  <g stroke="#DCD5C6" stroke-width="9" fill="none" stroke-linecap="round" opacity=".85">
-    <path d="M355 315 C400 355 470 400 540 430 C620 463 720 468 858 452"/>
+  <!-- ⑤ 绿地公园（淡绿，圆角规整） -->
+  <g fill="#D6E7C7" stroke="#C4DBB2" stroke-width="1">
+    <path d="M414 40 C428 30 452 30 464 40 C474 50 470 64 456 70 C442 76 422 70 416 58 C412 50 412 44 414 40 Z"/>
+    <rect x="400" y="368" rx="4" width="34" height="26"/>
+    <rect x="474" y="392" rx="4" width="26" height="20"/>
+    <rect x="548" y="428" rx="4" width="30" height="22"/>
+    <rect x="780" y="508" rx="6" width="46" height="28"/>
+    <rect x="336" y="596" rx="5" width="40" height="24"/>
+    <rect x="586" y="356" rx="4" width="24" height="18"/>
+    <rect x="656" y="156" rx="6" width="92" height="44"/>
+    <rect x="600" y="420" rx="4" width="22" height="16"/>
+  </g>
+
+  <!-- ⑥ 城市街区（规整楼块网格，市区核心） -->
+  <g fill="#EFEBE1" stroke="#FFFFFF" stroke-width="1.4">
+    <rect x="392" y="356" width="30" height="18" rx="1.5"/><rect x="428" y="356" width="24" height="18" rx="1.5"/>
+    <rect x="458" y="356" width="32" height="18" rx="1.5"/><rect x="496" y="356" width="26" height="18" rx="1.5"/>
+    <rect x="528" y="356" width="28" height="18" rx="1.5"/><rect x="396" y="380" width="24" height="16" rx="1.5"/>
+    <rect x="428" y="380" width="34" height="16" rx="1.5"/><rect x="470" y="380" width="26" height="16" rx="1.5"/>
+    <rect x="504" y="380" width="28" height="16" rx="1.5"/><rect x="540" y="380" width="20" height="16" rx="1.5"/>
+    <rect x="392" y="402" width="30" height="16" rx="1.5"/><rect x="428" y="402" width="24" height="16" rx="1.5"/>
+    <rect x="458" y="402" width="32" height="16" rx="1.5"/><rect x="496" y="402" width="26" height="16" rx="1.5"/>
+    <rect x="528" y="402" width="24" height="16" rx="1.5"/><rect x="396" y="424" width="24" height="14" rx="1.5"/>
+    <rect x="428" y="424" width="34" height="14" rx="1.5"/><rect x="470" y="424" width="26" height="14" rx="1.5"/>
+    <rect x="504" y="424" width="28" height="14" rx="1.5"/><rect x="540" y="424" width="22" height="14" rx="1.5"/>
+  </g>
+
+  <!-- ⑦ 道路网（白色主干 + 淡黄快速/高速，百度配色） -->
+  <!-- 高速：淡黄壳 + 亮芯 -->
+  <g stroke="#F2DCA4" stroke-width="10" fill="none" stroke-linecap="round">
+    <path d="M354 314 C400 354 470 400 540 430 C620 463 720 468 858 452"/>
     <path d="M462 398 C456 300 451 200 448 92"/>
-    <path d="M262 486 C310 472 360 456 408 442"/>
-    <path d="M272 640 C340 630 420 622 500 618 C560 615 612 610 652 604"/>
-    <path d="M600 440 C660 470 720 500 780 528"/>
+    <path d="M262 486 C310 472 360 456 406 440"/>
+    <path d="M272 640 C342 630 422 622 502 618 C562 615 614 610 654 604"/>
+    <path d="M600 440 C660 470 720 500 782 528"/>
   </g>
-  <g stroke="#FFFFFF" stroke-width="5.5" fill="none" stroke-linecap="round">
-    <path d="M355 315 C400 355 470 400 540 430 C620 463 720 468 858 452"/>
+  <g stroke="#FFE9AF" stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M354 314 C400 354 470 400 540 430 C620 463 720 468 858 452"/>
     <path d="M462 398 C456 300 451 200 448 92"/>
-    <path d="M262 486 C310 472 360 456 408 442"/>
-    <path d="M272 640 C340 630 420 622 500 618 C560 615 612 610 652 604"/>
-    <path d="M600 440 C660 470 720 500 780 528"/>
+    <path d="M262 486 C310 472 360 456 406 440"/>
+    <path d="M272 640 C342 630 422 622 502 618 C562 615 614 610 654 604"/>
+    <path d="M600 440 C660 470 720 500 782 528"/>
   </g>
-  <!-- 外环线 -->
-  <g fill="none">
-    <path d="M402 348 Q480 326 558 348 Q588 366 584 408 Q580 452 544 462 Q468 478 408 460 Q374 446 376 402 Q378 366 402 348 Z" stroke="#D3CCBC" stroke-width="7" stroke-linecap="round"/>
-    <path d="M402 348 Q480 326 558 348 Q588 366 584 408 Q580 452 544 462 Q468 478 408 460 Q374 446 376 402 Q378 366 402 348 Z" stroke="#FFF6D8" stroke-width="4" stroke-linecap="round"/>
-  </g>
-  <!-- 城市主干道 -->
-  <g stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity=".95">
+  <!-- 外环线（橙黄环） -->
+  <path d="M402 348 Q480 326 558 348 Q588 366 584 408 Q580 452 544 462 Q468 478 408 460 Q374 446 376 402 Q378 366 402 348 Z"
+    fill="none" stroke="#F5D48A" stroke-width="7" stroke-linecap="round"/>
+  <path d="M402 348 Q480 326 558 348 Q588 366 584 408 Q580 452 544 462 Q468 478 408 460 Q374 446 376 402 Q378 366 402 348 Z"
+    fill="none" stroke="#FFF0C8" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- 城市主干道（白） -->
+  <g stroke="#E7E2D4" stroke-width="6" fill="none" stroke-linecap="round">
     <path d="M446 348 C449 380 450 420 452 458"/>
     <path d="M396 386 C440 383 482 383 524 388"/>
     <path d="M404 440 C452 435 502 435 548 442"/>
     <path d="M512 348 C516 382 516 420 512 456"/>
+    <path d="M580 356 C596 390 606 420 612 448"/>
+    <path d="M350 300 C360 320 372 336 388 350"/>
+    <path d="M310 480 C340 470 368 462 392 456"/>
+    <path d="M560 250 C580 290 596 330 606 356"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round">
+    <path d="M446 348 C449 380 450 420 452 458"/>
+    <path d="M396 386 C440 383 482 383 524 388"/>
+    <path d="M404 440 C452 435 502 435 548 442"/>
+    <path d="M512 348 C516 382 516 420 512 456"/>
+    <path d="M580 356 C596 390 606 420 612 448"/>
+    <path d="M350 300 C360 320 372 336 388 350"/>
+    <path d="M310 480 C340 470 368 462 392 456"/>
+    <path d="M560 250 C580 290 596 330 606 356"/>
+  </g>
+  <!-- 次干道（细白） -->
+  <g stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" opacity=".95">
+    <path d="M422 350 C424 384 424 420 424 458"/>
+    <path d="M478 348 C480 380 480 420 480 460"/>
+    <path d="M412 408 C448 405 500 405 540 408"/>
+    <path d="M536 352 C540 384 540 420 538 456"/>
+    <path d="M628 200 C616 252 606 306 596 354"/>
+    <path d="M660 180 C648 240 636 300 626 352"/>
   </g>
 
-  <!-- 铁路 -->
-  <g stroke="#9B948A" stroke-width="2.4" fill="none" stroke-dasharray="9 6" opacity=".75">
+  <!-- ⑧ 铁路（灰白相间） -->
+  <g stroke="#C9C3B6" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M470 448 C520 442 600 424 680 402 C740 386 800 370 864 356"/>
+    <path d="M462 444 C430 380 410 300 400 220"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-width="1.5" fill="none" stroke-dasharray="7 7" stroke-linecap="round">
     <path d="M470 448 C520 442 600 424 680 402 C740 386 800 370 864 356"/>
     <path d="M462 444 C430 380 410 300 400 220"/>
   </g>
 
-  <!-- 地图注记 -->
+  <!-- ⑨ 地图注记（分级排版） -->
   <g font-family="PingFang SC, Microsoft YaHei, sans-serif">
-    <text x="600" y="474" font-size="13" fill="#7FA0B5" letter-spacing="5" transform="rotate(3 600 474)">海河</text>
-    <text x="470" y="107" text-anchor="middle" font-size="12" fill="#7F9BA4">于桥水库</text>
-    <text x="742" y="253" text-anchor="middle" font-size="12" fill="#7F9BA4">七里海</text>
-    <text x="378" y="593" text-anchor="middle" font-size="12" fill="#7F9BA4">团泊洼</text>
-    <text x="330" y="677" text-anchor="middle" font-size="12" fill="#7F9BA4">北大港水库</text>
-    <text x="658" y="446" font-size="10.5" fill="#A8A093" letter-spacing="2">京津塘高速</text>
-    <text x="452" y="186" font-size="10.5" fill="#A8A093" letter-spacing="2" transform="rotate(88 452 186)">津蓟高速</text>
-    <text x="480" y="336" text-anchor="middle" font-size="10" fill="#B3AC9C" letter-spacing="2">外环线</text>
-    <text x="700" y="312" font-size="10.5" fill="#A8A093" letter-spacing="2">永定新河</text>
-    <text x="430" y="634" font-size="10.5" fill="#A8A093" letter-spacing="2">独流减河</text>
-    <text x="452" y="70" font-size="10.5" fill="#8FA383" letter-spacing="2">盘山</text>
+    <g fill="#5F6670" font-size="12" font-weight="600" letter-spacing="1.5" opacity=".92">
+      <text x="604" y="478" font-size="11" fill="#6E93B5" font-style="italic" letter-spacing="4" transform="rotate(4 604 478)">海　河</text>
+      <text x="712" y="316" font-size="10.5" fill="#6E93B5" font-style="italic" letter-spacing="2">永定新河</text>
+      <text x="432" y="636" font-size="10.5" fill="#6E93B5" font-style="italic" letter-spacing="2">独流减河</text>
+    </g>
+    <g fill="#7A93A8" font-size="11.5" text-anchor="middle">
+      <text x="470" y="107">于桥水库</text>
+      <text x="742" y="253">七里海</text>
+      <text x="378" y="593">团泊洼</text>
+      <text x="330" y="677">北大港水库</text>
+    </g>
+    <g fill="#9B9484" font-size="10" letter-spacing="1.5">
+      <text x="652" y="450">京津塘高速</text>
+      <text x="436" y="182" transform="rotate(88 436 182)">津蓟高速</text>
+      <text x="482" y="336" text-anchor="middle">外环线</text>
+    </g>
+    <g fill="#8FA383" font-size="10.5" letter-spacing="2">
+      <text x="428" y="62">盘山风景区</text>
+      <text x="682" y="182">环秀湖</text>
+    </g>
   </g>
 
-  <!-- 指北针 + 比例尺 -->
+  <!-- ⑩ 指北针 + 比例尺 -->
   <g transform="translate(938 58)">
-    <circle r="21" fill="#FFFFFF" stroke="#D9D3C5" stroke-width="2"/>
-    <path d="M0 -13 L5 6 L0 2 L-5 6 Z" fill="#C0827D"/>
-    <path d="M0 13 L5 -6 L0 -2 L-5 -6 Z" fill="#B9C4BD"/>
+    <circle r="21" fill="#FFFFFF" stroke="#DCD6C6" stroke-width="2"/>
+    <path d="M0 -13 L5 6 L0 2 L-5 6 Z" fill="#D06B5E"/>
+    <path d="M0 13 L5 -6 L0 -2 L-5 -6 Z" fill="#BCC6BF"/>
     <text y="-27" text-anchor="middle" font-size="11" fill="#9A9488" font-weight="600">北</text>
   </g>
   <g transform="translate(38 728)">
-    <rect x="-6" y="-14" width="96" height="24" rx="7" fill="#FFFFFF" opacity=".88"/>
+    <rect x="-6" y="-14" width="96" height="24" rx="7" fill="#FFFFFF" opacity=".9"/>
     <line x1="4" y1="0" x2="76" y2="0" stroke="#9A9488" stroke-width="2.5"/>
     <line x1="4" y1="-4" x2="4" y2="4" stroke="#9A9488" stroke-width="2.5"/>
     <line x1="40" y1="-3" x2="40" y2="3" stroke="#9A9488" stroke-width="2"/>
