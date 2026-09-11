@@ -116,6 +116,25 @@
     });
   }
 
+  /* ---------------- 权威延伸阅读（真实外链） ---------------- */
+  const authLinks = AUTHORITY_LINKS[doc.tab] || [];
+  if (authLinks.length) {
+    const el = document.createElement('div');
+    el.className = 'mt-16';
+    el.innerHTML = `<div class="section-title"><span class="st-bar"></span>权威延伸阅读<span class="st-more">真实站点 · 新窗口打开</span></div>
+      <div class="auth-zone">
+        ${authLinks.map(l => `
+          <a class="az-link" href="${l.url}" target="_blank" rel="noopener noreferrer">
+            <div class="az-body">
+              <div class="az-name">${esc(l.name)}</div>
+              <div class="az-desc">${esc(l.desc)}</div>
+            </div>
+            <span class="az-arrow">${icon('link')}</span>
+          </a>`).join('')}
+      </div>`;
+    $('#actions').parentElement.insertBefore(el, $('#actions'));
+  }
+
   $('#backBtn').addEventListener('click', () => goBack('community.html'));
 </script>
 </body>
