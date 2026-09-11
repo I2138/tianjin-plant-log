@@ -62,8 +62,14 @@
 
   function init() {
     const plant = getPlant(log.plantId) || PLANTS[0];
-    const photoCount = log.photoSeeds ? log.photoSeeds.length : (log.photos || 3);
-    const srcs = Array.from({ length: Math.min(photoCount, 6) }, (_, i) => plantPhoto(plant.id, i + 1));
+    /* 优先使用用户上传的真实照片（dataURL 数组），否则回退到图库模拟图；兼容内置日志 photos 为数字的旧格式 */
+    const realPhotos = Array.isArray(log.photos) ? log.photos.filter(Boolean) : [];
+    const photoCount = realPhotos.length
+      || (Array.isArray(log.photoSeeds) ? log.photoSeeds.length : 0)
+      || (typeof log.photos === 'number' ? log.photos : 3);
+    const srcs = realPhotos.length
+      ? realPhotos.slice(0, 6)
+      : Array.from({ length: Math.min(photoCount, 6) }, (_, i) => plantPhoto(plant.id, i + 1));
 
     /* ---------------- 图集 ---------------- */
     $('#galleryHost').innerHTML = `
