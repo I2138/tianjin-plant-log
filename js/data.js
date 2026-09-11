@@ -547,6 +547,28 @@ const COMMUNITY_TABS = [
   { key: 'tips', label: '野外识别小技巧' },
 ];
 
+/* 权威科普外链（真实可访问站点，新窗口打开） */
+const AUTHORITY_LINKS = {
+  native: [
+    { name: '植物智 · 中国植物志在线', desc: '《中国植物志》全文在线检索，权威物种形态描述与分布', url: 'https://www.iplant.cn/' },
+    { name: 'PPBC 中国植物图像库', desc: '数百万张实拍植物照片，按物种检索比对', url: 'https://ppbc.iplant.cn/' },
+    { name: '国家植物标本资源库 NSII', desc: '全国植物标本数字化资源共享平台', url: 'https://www.nsii.org.cn/' },
+  ],
+  invasive: [
+    { name: '生态环境部', desc: '外来入侵物种名录与防控政策权威发布', url: 'https://www.mee.gov.cn/' },
+    { name: '农业农村部', desc: '外来入侵物种普查、监测与治理动态', url: 'http://www.moa.gov.cn/' },
+    { name: '植物智 · 入侵植物检索', desc: '在线查询外来入侵植物形态特征与危害', url: 'https://www.iplant.cn/' },
+  ],
+  seasons: [
+    { name: '国家林业和草原局', desc: '国土绿化、自然保护地与林草科普', url: 'https://www.forestry.gov.cn/' },
+    { name: 'PPBC 中国植物图像库', desc: '按季节浏览全国植物实拍照片', url: 'https://ppbc.iplant.cn/' },
+  ],
+  tips: [
+    { name: '植物智 · 植物百科', desc: '按花色、叶形、生境检索物种，学习识别特征', url: 'https://www.iplant.cn/' },
+    { name: '中国数字植物标本馆 CVH', desc: '在线比对植物标本，野外识别好帮手', url: 'https://www.cvh.ac.cn/' },
+  ],
+};
+
 const ARTICLES = [
   {
     id: 'a1', tab: 'native', kind: 'article', cover: 1, title: '为什么天津的市树是国槐？',
