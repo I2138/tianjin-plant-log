@@ -193,6 +193,8 @@
     const slice = filtered.slice(shown, shown + PAGE_SIZE);
     shown += slice.length;
     const wf = $('#waterfall');
+    /* 首批渲染时清掉骨架占位卡，避免慢网下残留空白板块 */
+    $$('.sk-card', wf).forEach(sk => sk.remove());
     slice.forEach(p => wf.insertAdjacentHTML('beforeend', cardHTML(p)));
     mountCardImgs();
     updateFooter();
