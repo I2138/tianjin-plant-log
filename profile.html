@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>我的 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="page-title">我的</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 骨架屏 -->
+  <div class="profile-skeleton" id="pSkeleton">
+    <div class="ps-row">
+      <div class="skeleton sk-circle" style="width:72px;height:72px"></div>
+      <div style="flex:1">
+        <div class="skeleton sk-text" style="width:38%;height:18px"></div>
+        <div class="skeleton sk-text mt-8" style="width:56%;height:11px"></div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="skeleton" style="height:22px;width:36px;margin:0 auto"></div><div class="skeleton sk-text mt-8" style="width:44px;height:10px;margin:6px auto 0"></div></div>
+      <div class="stat-cell"><div class="skeleton" style="height:22px;width:36px;margin:0 auto"></div><div class="skeleton sk-text mt-8" style="width:44px;height:10px;margin:6px auto 0"></div></div>
+      <div class="stat-cell"><div class="skeleton" style="height:22px;width:36px;margin:0 auto"></div><div class="skeleton sk-text mt-8" style="width:44px;height:10px;margin:6px auto 0"></div></div>
+      <div class="stat-cell"><div class="skeleton" style="height:22px;width:36px;margin:0 auto"></div><div class="skeleton sk-text mt-8" style="width:44px;height:10px;margin:6px auto 0"></div></div>
+    </div>
+    <div class="skeleton" style="height:200px;border-radius:var(--radius)"></div>
+  </div>
+
+  <div id="pBody" class="hidden"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  renderTabbar('mine');
+
+  function renderProfile() {
+    const user = Auth.current();
+    if (!user) {
+      $('#pBody').innerHTML = `
+        <div class="card card-pad mt-16">
+          ${emptyStateHTML({
+            title: '登录后使用完整功能',
+            desc: '每个账号拥有独立的数据空间：\n观察日志、草稿、收藏、上报互不干扰。',
+            btnText: '登录 / 注册', btnUrl: 'auth.html', btnIcon: 'user',
+          })}
+        </div>
+        <div class="entry-list mt-16">
+          ${entryHTML('heart', 'red', '我的收藏', '收藏的物种与科普文章', 'my-favorites.html')}
+          ${entryHTML('settings', 'blue', '设置', '账号安全 · 通知 · 隐私 · 关于', 'settings.html')}
+        </div>`;
+      bindEntries();
+      return;
+    }
+    const s = DB.stats();
+    $('#pBody').innerHTML = `
+      <div class="profile-top">
+        <div class="avatar avatar-editable" id="avatarBox" title="点击更换头像"><div class="skeleton sk-circle" style="width:100%;height:100%"></div><span class="av-badge" id="avBadge"></span></div>
+        <div>
+          <div class="p-name-row">
+            <span class="p-name">${esc(user.name)}</span>
+            <button class="p-edit-btn" id="editProfileBtn">${icon('edit').replace('22" height="22', '12" height="12"')} 编辑资料</button>
+          </div>
+          <div class="p-sub">天津城市植物共建观察员 · ${new Date(user.createdAt).toLocaleDateString()} 加入</div>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-cell"><div class="sc-num">${s.logs}</div><div class="sc-label">提交日志</div></div>
+        <div class="stat-cell"><div class="sc-num">${s.species}</div><div class="sc-label">记录物种</div></div>
+        <div class="stat-cell"><div class="sc-num">${s.places}</div><div class="sc-label">打卡点位</div></div>
+        <div class="stat-cell"><div class="sc-num">${s.badges}<span class="fz-12 text-3">/${BADGES.length}</span></div><div class="sc-label">成就徽章</div></div>
+      </div>
+      <div class="entry-list">
+        ${entryHTML('edit', 'green', '我的观察日志', `${s.logs} 条记录 · ${UD.get('drafts', []).length} 份草稿`, 'my-logs.html')}
+        ${entryHTML('heart', 'red', '我的收藏', `物种 ${UD.get('favs', []).length} · 文章 ${UD.get('favArts', []).length}`, 'my-favorites.html')}
+        ${entryHTML('alert', 'yellow', '我的上报', `${DB.myReports().length} 条绿化问题上报`, 'my-reports.html')}
+        ${entryHTML('medal', 'yellow', '成就勋章', `已解锁 ${s.badges} / ${BADGES.length} 枚`, 'badges.html')}
+        ${entryHTML('pin', 'red', '绿化问题上报', '发现枯萎、病虫害、倒伏等问题', 'report.html')}
+        ${entryHTML('settings', 'blue', '设置', '账号安全 · 通知 · 隐私 · 关于', 'settings.html')}
+      </div>`;
+
+    /* 头像骨架 → 加载 */
+    setTimeout(() => {
+      const av = $('#avatarBox');
+      av.innerHTML = `<img src="${avatarFor(user, 72)}" alt="头像"><span class="av-badge" id="avBadge"></span>`;
+      $('#avBadge').innerHTML = icon('camera').replace('22" height="22', '13" height="13"');
+      const img = av.querySelector('img');
+      img.style.opacity = '0';
+      img.style.transition = 'opacity .5s';
+      requestAnimationFrame(() => img.style.opacity = '1');
+    }, 500);
+    bindEntries();
+
+    /* 编辑头像/昵称 */
+    $('#avatarBox').addEventListener('click', openEditSheet);
+    $('#editProfileBtn').addEventListener('click', openEditSheet);
+  }
+
+  /* ---------------- 编辑资料弹层 ---------------- */
+  function openEditSheet() {
+    const cur = Auth.current();
+    if (!cur) return;
+    let picked = cur.avatar || '';
+    const presetKeys = Object.keys(AVATAR_PRESETS);
+    const mask = document.createElement('div');
+    mask.className = 'sheet-mask';
+    mask.innerHTML = `
+      <div class="sheet">
+        <div class="sheet-bar"></div>
+        <div class="sheet-title">编辑资料</div>
+        <div class="form-label" style="margin:4px 0 10px">选择头像</div>
+        <div class="av-grid">
+          ${presetKeys.map(k => `
+            <button class="av-opt${cur.avatar === k ? ' on' : ''}" data-k="${k}"><img src="${avatarPreset(k, 64)}" alt=""></button>`).join('')}
+          <button class="av-opt av-initial${!cur.avatar ? ' on' : ''}" data-k=""><img src="${avatar(cur.name, 64)}" alt=""><span>默认</span></button>
+        </div>
+        <div class="form-label" style="margin:16px 0 8px">昵称</div>
+        <input class="form-input" id="nameInput" maxlength="12" value="${esc(cur.name)}" placeholder="2-12 个字符">
+        <div class="sheet-btns">
+          <button class="btn btn-ghost" id="sheetCancel">取消</button>
+          <button class="btn btn-primary" id="sheetSave">保存</button>
+        </div>
+      </div>`;
+    document.body.appendChild(mask);
+    requestAnimationFrame(() => mask.classList.add('show'));
+    const close = () => { mask.classList.remove('show'); setTimeout(() => mask.remove(), 250); };
+    mask.addEventListener('click', e => { if (e.target === mask) close(); });
+    $('#sheetCancel', mask).addEventListener('click', close);
+    mask.querySelectorAll('.av-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mask.querySelectorAll('.av-opt').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        picked = btn.dataset.k;
+      });
+    });
+    $('#sheetSave', mask).addEventListener('click', () => {
+      const r = Auth.updateProfile({ name: $('#nameInput', mask).value, avatar: picked });
+      if (!r.ok) { showToast(r.msg); return; }
+      close();
+      showToast('资料已更新');
+      renderProfile();
+    });
+  }
+
+  function entryHTML(ic, color, name, desc, url) {
+    return `<div class="entry-item" data-nav="${url}" data-nav-text="正在打开">
+      <div class="ei-icon ${color}">${icon(ic)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="ei-name">${esc(name)}</div>
+        <div class="ei-desc">${esc(desc)}</div>
+      </div>
+      <span class="ei-arrow">${icon('chevronRight')}</span>
+    </div>`;
+  }
+  function bindEntries() {
+    $$('#pBody .entry-item').forEach(el => {
+      el.addEventListener('click', () => {
+        if (!Auth.current() && el.dataset.nav === 'report.html') { requireLoginToast(); return; }
+        navigate(el.dataset.nav, '正在打开');
+      });
+    });
+  }
+
+  /* 进入：骨架屏 → 渲染 */
+  setTimeout(() => {
+    $('#pSkeleton').classList.add('hidden');
+    $('#pBody').classList.remove('hidden');
+    renderProfile();
+  }, 750);
+</script>
+</body>
+</html>
+
+

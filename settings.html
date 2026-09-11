@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>设置 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">设置</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page" id="settingsPage">
+  <!-- 账号 -->
+  <div class="section-title"><span class="st-bar"></span>账号安全</div>
+  <div class="setting-group" id="accountGroup"></div>
+
+  <!-- 消息通知 -->
+  <div class="section-title"><span class="st-bar"></span>消息通知</div>
+  <div class="setting-group">
+    <div class="setting-row">
+      <span class="sr-icon" id="ic1"></span>
+      <div style="flex:1"><div class="sr-name">评论与点赞通知</div><div class="fz-12 text-3">有人评论、点赞我的内容时提醒</div></div>
+      <label class="switch"><input type="checkbox" data-set="notifyComment"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+    </div>
+    <div class="setting-row">
+      <span class="sr-icon" id="ic2"></span>
+      <div style="flex:1"><div class="sr-name">任务进度提醒</div><div class="fz-12 text-3">参与的任务临近截止时提醒</div></div>
+      <label class="switch"><input type="checkbox" data-set="notifyTask"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+    </div>
+  </div>
+
+  <!-- 隐私 -->
+  <div class="section-title"><span class="st-bar"></span>隐私设置</div>
+  <div class="setting-group">
+    <div class="setting-row">
+      <span class="sr-icon" id="ic3"></span>
+      <div style="flex:1"><div class="sr-name">公开我的观察动态</div><div class="fz-12 text-3">关闭后，我的日志仅自己可见</div></div>
+      <label class="switch"><input type="checkbox" data-set="publicMoments"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+    </div>
+    <div class="setting-row">
+      <span class="sr-icon" id="ic4"></span>
+      <div style="flex:1"><div class="sr-name">隐藏精确点位坐标</div><div class="fz-12 text-3">他人查看我的日志时不展示经纬度</div></div>
+      <label class="switch"><input type="checkbox" data-set="hideCoord"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+    </div>
+  </div>
+
+  <!-- 意见反馈 -->
+  <div class="section-title"><span class="st-bar"></span>意见反馈</div>
+  <div class="setting-group" style="padding:16px">
+    <textarea class="form-textarea" id="fbInput" placeholder="对平台功能、内容有任何建议，欢迎告诉我们…"></textarea>
+    <button class="btn btn-primary btn-sm mt-12" style="width:100%" id="fbSend">提交反馈</button>
+  </div>
+
+  <!-- 关于 -->
+  <div class="section-title"><span class="st-bar"></span>关于</div>
+  <div class="setting-group">
+    <div class="setting-row" id="aboutRow">
+      <span class="sr-icon" id="ic5"></span>
+      <div class="sr-name" style="flex:1">关于津城植物日志</div>
+      <span class="sr-val">v1.0.0 原型</span>
+    </div>
+    <div class="setting-row" id="clearRow">
+      <span class="sr-icon" id="ic6"></span>
+      <div class="sr-name" style="flex:1">清空本机模拟数据</div>
+      <span class="sr-val">重置演示状态</span>
+    </div>
+  </div>
+
+  <div class="center fz-12 text-3 mt-20 mb-8">津城植物日志 · 城市植物共建观察平台<br>本站为交互原型，数据均为模拟数据</div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('mine');
+
+  ['#ic1', '#ic2', '#ic3', '#ic4', '#ic5', '#ic6'].forEach((sel, i) => {
+    $(sel).innerHTML = [icon('comment'), icon('list'), icon('eye'), icon('pin'), icon('sprout'), icon('trash')][i];
+  });
+
+  /* ---------------- 账号区 ---------------- */
+  const user = Auth.current();
+  $('#accountGroup').innerHTML = user ? `
+    <div class="setting-row">
+      <div class="cm-avatar" style="width:42px;height:42px;border-radius:50%;overflow:hidden;flex:none"><img src="${avatarFor(user, 42)}" alt=""></div>
+      <div style="flex:1;min-width:0">
+        <div class="sr-name">${esc(user.name)}</div>
+        <div class="fz-12 text-3">注册于 ${new Date(user.createdAt).toLocaleDateString()}</div>
+      </div>
+      <span class="tag soft">已登录</span>
+    </div>
+    <div class="setting-row" id="logoutRow">
+      <span class="sr-icon" style="color:var(--invasive)">${icon('close')}</span>
+      <div class="sr-name" style="color:var(--invasive);flex:1">退出登录</div>
+    </div>` : `
+    <div class="setting-row" data-nav="auth.html" data-nav-text="正在前往登录">
+      <span class="sr-icon">${icon('user')}</span>
+      <div class="sr-name" style="flex:1">尚未登录</div>
+      <span class="sr-val">去登录</span>
+    </div>`;
+
+  if (user) {
+    $('#logoutRow').addEventListener('click', () => {
+      showModal({
+        icon: 'error', title: '退出登录', content: '退出后本机数据仍保留，\n下次登录可继续使用。',
+        confirmText: '退出', cancelText: '取消',
+        onConfirm: () => { Auth.logout(); showToast('已退出登录'); setTimeout(() => navigate('auth.html', '正在返回登录页'), 600); },
+      });
+    });
+  }
+
+  /* ---------------- 开关 ---------------- */
+  $$('[data-set]').forEach(sw => {
+    const key = sw.dataset.set;
+    sw.checked = user ? DB.settings()[key] : false;
+    sw.disabled = !user;
+    sw.addEventListener('change', () => {
+      if (!user) { requireLoginToast(); sw.checked = false; return; }
+      DB.setSetting(key, sw.checked);
+      showToast('设置已保存');
+    });
+  });
+
+  /* ---------------- 意见反馈 ---------------- */
+  $('#fbSend').addEventListener('click', () => {
+    const txt = $('#fbInput').value.trim();
+    if (txt.length < 5) { showErrorModal('反馈内容至少 5 个字，请补充描述。', '无法提交'); return; }
+    const btn = $('#fbSend');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> 提交中…';
+    setTimeout(() => {
+      btn.disabled = false; btn.textContent = '提交反馈';
+      $('#fbInput').value = '';
+      showModal({ icon: 'success', title: '反馈已收到', content: '感谢你的建议！\n我们会认真阅读每一条反馈。' });
+    }, 1000);
+  });
+
+  /* ---------------- 关于 ---------------- */
+  $('#aboutRow').addEventListener('click', () => {
+    showModal({
+      icon: 'none', title: '关于津城植物日志',
+      html: `<div style="text-align:left;font-size:13px;color:var(--text-2);line-height:2">
+        津城植物日志 · 城市植物共建观察平台<br>
+        版本：v1.0.0（交互原型）<br>
+        面向天津市民与自然爱好者，记录身边草木、共建城市自然档案。<br>
+        本站为纯前端原型：无后端服务，全部数据为模拟数据，仅保存在本机浏览器中。</div>`,
+      confirmText: '知道了',
+    });
+  });
+
+  /* ---------------- 清空数据 ---------------- */
+  $('#clearRow').addEventListener('click', () => {
+    showModal({
+      icon: 'error', title: '清空本机数据',
+      content: '将清除所有账号、日志、草稿、收藏与上报记录，\n恢复初始演示状态。此操作不可恢复。',
+      confirmText: '确认清空', cancelText: '取消',
+      onConfirm: () => {
+        Object.keys(localStorage).filter(k => k.startsWith('plantlog:')).forEach(k => localStorage.removeItem(k));
+        showToast('已恢复初始状态');
+        setTimeout(() => navigate('auth.html', '正在前往登录页'), 700);
+      },
+    });
+  });
+
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+</script>
+</body>
+</html>
+
+

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>我的上报 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">我的上报</div>
+    <div class="spacer"></div>
+    <button class="h-btn strong" data-nav="report.html" data-nav-text="去上报问题">去上报</button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="map-legend mt-12" style="gap:10px">
+    <span class="lg"><i style="background:#8CA6B8"></i>已提交</span>
+    <span class="lg"><i style="background:#C7A36B"></i>已受理</span>
+    <span class="lg"><i style="background:#7C9A80"></i>处理中</span>
+    <span class="lg"><i style="background:#6FA07A"></i>已办结</span>
+  </div>
+  <div id="reportList" class="mt-12"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('mine');
+
+  const STATUS_META = {
+    submitted: { label: '已提交', cls: 'gray', color: '#8CA6B8' },
+    accepted: { label: '已受理', cls: 'warn', color: '#C7A36B' },
+    processing: { label: '处理中', cls: 'soft', color: '#7C9A80' },
+    done: { label: '已办结', cls: 'native', color: '#6FA07A' },
+  };
+
+  function renderWithLoading() {
+    $('#reportList').innerHTML = Array(2).fill(0).map(() => `
+      <div class="report-item">
+        <div class="skeleton sk-text" style="width:46%;height:15px"></div>
+        <div class="skeleton sk-text mt-8" style="width:70%;height:11px"></div>
+        <div class="skeleton sk-text mt-8" style="width:30%;height:10px"></div>
+      </div>`).join('');
+    setTimeout(render, 580);
+  }
+
+  function render() {
+    if (!Auth.current()) {
+      $('#reportList').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+        title: '登录后查看上报记录', desc: '你的绿化问题上报与处理进度\n将保存在账号空间中。', btnIcon: 'pin', small: true,
+      })}</div>`;
+      return;
+    }
+    const list = DB.myReports();
+    if (!list.length) {
+      $('#reportList').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+        title: '还没有上报记录',
+        desc: '发现树木枯萎、病虫害、倒伏等问题，\n拍照上报，共建更好的城市绿化。',
+        btnText: '去上报问题', btnUrl: 'report.html', btnIcon: 'pin',
+      })}</div>`;
+      return;
+    }
+    $('#reportList').innerHTML = list.map(r => {
+      const st = STATUS_META[r.status] || STATUS_META.submitted;
+      return `<div class="report-item" data-id="${r.id}">
+        <div class="ri-head">
+          <span style="width:10px;height:10px;border-radius:50%;background:${st.color};flex:none"></span>
+          <div class="ri-type">${esc(r.type)} · ${esc(r.plantName)}</div>
+          <span class="tag ${st.cls}">${st.label}</span>
+        </div>
+        <div class="ri-place">${esc(r.place)}</div>
+        <div class="ri-time">上报于 ${esc(r.time)}</div>
+        ${r.photoSeeds && r.photoSeeds.length ? `<div class="ri-thumbs">${r.photoSeeds.slice(0, 3).map((s, i) => `<div class="rt">${imgBoxHTML()}</div>`).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+    $$('#reportList .report-item').forEach(el => {
+      const r = list.find(x => x.id === el.dataset.id);
+      $$('.rt .img-box', el).forEach((box, i) => mountImg(box, plantPhoto(r.plantId || 1, r.photoSeeds[i] || i + 1), { delay: 180 + i * 90 }));
+      $$('.rt .img-box', el).forEach((box, i) => box.parentElement.addEventListener('click', e => {
+        e.stopPropagation();
+        showImagePreview((r.photoSeeds || [1]).slice(0, 3).map(s => ({ src: plantPhoto(r.plantId || 1, s), caption: '上报现场照片' })), i);
+      }));
+      el.addEventListener('click', () => openDetail(r));
+    });
+  }
+
+  /* ---------------- 上报详情（弹窗面板） ---------------- */
+  function openDetail(r) {
+    const st = STATUS_META[r.status] || STATUS_META.submitted;
+    showSheet('上报详情', `
+      <div class="flex" style="gap:8px;align-items:center;margin-bottom:12px">
+        <span class="fz-16 bold">${esc(r.type)}</span>
+        <span class="tag ${st.cls}">${st.label}</span>
+      </div>
+      <div class="kv"><span class="k">涉及植物</span><span class="v">${esc(r.plantName)}</span></div>
+      <div class="kv"><span class="k">位置</span><span class="v">${esc(r.place)}<br><span class="fz-12 text-3">${esc(r.coords)}</span></span></div>
+      <div class="kv"><span class="k">上报时间</span><span class="v">${esc(r.time)}</span></div>
+      <div class="kv"><span class="k">问题描述</span><span class="v">${esc(r.desc)}</span></div>
+      ${r.photoSeeds && r.photoSeeds.length ? `
+      <div class="kv"><span class="k">现场照片</span><span class="v" style="display:flex;gap:8px;flex-wrap:wrap">
+        ${r.photoSeeds.slice(0, 3).map((s, i) => `<div class="rt" style="width:72px;height:72px;border-radius:10px;overflow:hidden" data-ph="${i}">${imgBoxHTML()}</div>`).join('')}
+      </span></div>` : ''}
+      <div class="form-label mt-16" style="margin-bottom:10px">处理进度</div>
+      <div class="status-timeline">
+        ${(r.timeline || []).map((n, i, arr) => `
+          <div class="stl-node ${i === arr.length - 1 ? 'cur' : 'done'} ${i < arr.length - 1 ? 'done' : ''}">
+            <div class="stl-name">${esc(n.name)}</div>
+            <div class="stl-time">${esc(n.time)}</div>
+            ${n.desc ? `<div class="stl-desc">${esc(n.desc)}</div>` : ''}
+          </div>`).join('')}
+      </div>
+      ${r.reply ? `
+      <div class="loc-error mt-8" style="background:var(--primary-soft);color:var(--primary-deep)">
+        <span style="flex:none;display:flex;margin-top:2px">${icon('comment').replace('15" height="15', '14" height="14"')}</span>
+        <div><b>官方回复</b><br>${esc(r.reply)}</div>
+      </div>` : ''}
+    `);
+    /* 面板内图片挂载 */
+    setTimeout(() => {
+      $$('[data-ph] .img-box').forEach((box, i) => {
+        mountImg(box, plantPhoto(r.plantId || 1, r.photoSeeds[i] || i + 1), { delay: 160 });
+        box.parentElement.addEventListener('click', () => showImagePreview((r.photoSeeds || [1]).slice(0, 3).map(s => ({ src: plantPhoto(r.plantId || 1, s), caption: '上报现场照片' })), i));
+      });
+    }, 80);
+  }
+
+  renderWithLoading();
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+</script>
+</body>
+</html>
+
+
+
+

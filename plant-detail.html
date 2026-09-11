@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>植物详情 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<!-- 顶部大图 -->
+<div class="hero-section" id="hero">
+  <div id="heroImgHost"></div>
+  <button class="fav-btn" id="favBtn"></button>
+  <div class="hero-shade" id="heroShade">
+    <span id="heroFoot" style="display:inline-flex;align-items:center;gap:5px"></span>
+  </div>
+</div>
+
+<!-- 悬浮返回按钮 -->
+<button class="sub-header-back-btn" id="backTop" style="position:fixed;left:16px;top:16px;z-index:60;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 4px 14px rgba(40,56,44,.18)"></button>
+
+<div class="page">
+  <!-- 标题区 -->
+  <div class="detail-title-bar" id="titleBar">
+    <div class="dt-name"></div>
+    <div class="dt-latin"></div>
+    <div class="dt-tags"></div>
+  </div>
+
+  <!-- 折叠面板：基础信息（默认展开） -->
+  <div class="collapsible open" id="colBase">
+    <div class="col-head"><span style="color:var(--primary-deep);display:flex" data-ic="book"></span><div class="col-title">基础信息</div><div class="col-arrow" data-ic="chevronDown"></div></div>
+    <div class="col-body"><div class="col-body-inner" id="baseBody"></div></div>
+  </div>
+
+  <!-- 折叠面板：形态特征（默认收起） -->
+  <div class="collapsible" id="colForm">
+    <div class="col-head"><span style="color:var(--primary-deep);display:flex" data-ic="leaf"></span><div class="col-title">形态特征</div><div class="col-arrow" data-ic="chevronDown"></div></div>
+    <div class="col-body"><div class="col-body-inner" id="formBody"></div></div>
+  </div>
+
+  <!-- 折叠面板：天津本地生态（默认收起） -->
+  <div class="collapsible" id="colEco">
+    <div class="col-head"><span style="color:var(--primary-deep);display:flex" data-ic="pin"></span><div class="col-title">天津本地生态</div><div class="col-arrow" data-ic="chevronDown"></div></div>
+    <div class="col-body"><div class="col-body-inner" id="ecoBody"></div></div>
+  </div>
+
+  <!-- 用户观测图集 -->
+  <div class="section-title"><span class="st-bar"></span>用户观测图集<span class="st-more" id="galleryCount"></span></div>
+  <div class="gallery-strip" id="gallery"></div>
+
+  <!-- 点位预览 -->
+  <div class="section-title"><span class="st-bar"></span>天津观测点位<span class="st-more" id="pointCount"></span></div>
+  <div class="mini-map" id="miniMap">
+    <div class="map-canvas" id="miniCanvas"></div>
+  </div>
+  <div class="map-legend">
+    <span class="lg"><i style="background:#6FA07A"></i>本土植物</span>
+    <span class="lg"><i style="background:#C7A36B"></i>外来植物</span>
+    <span class="lg"><i style="background:#C0827D"></i>入侵植物</span>
+  </div>
+
+  <button class="btn btn-primary btn-block mt-24" id="backBtn" style="margin-bottom:8px">返回图鉴</button>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  const plant = getPlant(qs('id')) || PLANTS[0];
+
+  /* 图标 */
+  $('#backTop').innerHTML = icon('chevronLeft');
+  $('#favBtn').innerHTML = icon('heart');
+  $$('[data-ic]').forEach(el => el.innerHTML = icon(el.dataset.ic));
+
+  /* ---------------- 顶部大图（含骨架 / 失败态演示） ---------------- */
+  const heroHost = $('#heroImgHost');
+  heroHost.innerHTML = imgBoxHTML('hero-img', 'width:100%;height:300px');
+  const SIMULATE_FAIL = plant.id === 15; /* 一枝黄花详情页演示图片加载失败 → 重试成功 */
+  mountImg($('#hero .img-box'), plantCover(plant.id), { fail: SIMULATE_FAIL, delay: 700 });
+
+  $('#heroFoot').innerHTML = icon('camera').replace('22" height="22', '13" height="13') + `<span>城市植物共建观察平台 · 实拍图</span>`;
+  $('#heroShade').style.opacity = 0;
+  setTimeout(() => { $('#heroShade').style.transition = 'opacity .5s'; $('#heroShade').style.opacity = 1; }, 900);
+
+  /* ---------------- 收藏 ---------------- */
+  function syncFav() {
+    const on = Auth.current() && DB.isFav(plant.id);
+    $('#favBtn').classList.toggle('on', !!on);
+    $('#favBtn').innerHTML = on ? icon('heartFill') : icon('heart');
+  }
+  syncFav();
+  $('#favBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    if (!Auth.current()) { requireLoginToast(); return; }
+    const added = DB.toggleFav(plant.id);
+    syncFav();
+    showToast(added ? `已收藏「${plant.name}」` : `已取消收藏`);
+  });
+
+  /* ---------------- 标题与标签 ---------------- */
+  $('#titleBar .dt-name').textContent = plant.name;
+  $('#titleBar .dt-latin').textContent = plant.latin;
+  $('#titleBar .dt-tags').innerHTML = `
+    <span class="tag ${attrClass(plant.attr)}">${attrLabel(plant.attr)}物种</span>
+    <span class="tag type">${plant.type}</span>
+    ${plant.seasons.map(s => `<span class="tag gray">${s}</span>`).join('')}
+    <span class="tag soft">${plant.protect}</span>`;
+
+  /* ---------------- 基础信息 ---------------- */
+  $('#baseBody').innerHTML = `
+    <div class="kv"><span class="k">中文名</span><span class="v bold">${esc(plant.name)}</span></div>
+    <div class="kv"><span class="k">拉丁名</span><span class="v latin">${esc(plant.latin)}</span></div>
+    <div class="kv"><span class="k">科属</span><span class="v">${esc(plant.family)}</span></div>
+    <div class="kv"><span class="k">类别</span><span class="v">${esc(plant.type)}</span></div>
+    <div class="kv"><span class="k">保护等级</span><span class="v">${esc(plant.protect)}</span></div>`;
+
+  /* ---------------- 形态特征 ---------------- */
+  $('#formBody').innerHTML = `
+    <div class="kv"><span class="k">形态描述</span><span class="v">${esc(plant.form)}</span></div>
+    <div class="kv"><span class="k">花期</span><span class="v">${esc(plant.flower)}</span></div>
+    <div class="kv"><span class="k">果期</span><span class="v">${esc(plant.fruit)}</span></div>
+    <div class="kv"><span class="k">生长习性</span><span class="v">${esc(plant.habit)}</span></div>`;
+
+  /* ---------------- 天津本地生态 ---------------- */
+  const points = MAP_POINTS.filter(pt => pt.plantId === plant.id);
+  $('#ecoBody').innerHTML = `
+    <div class="kv"><span class="k">生长环境</span><span class="v">${esc(plant.eco.split('。')[0])}。</span></div>
+    <div class="kv"><span class="k">分布区域</span><span class="v">${plant.regions.map(r => `<span class="tag gray" style="margin:0 5px 5px 0">${esc(r)}</span>`).join('')}</span></div>
+    <div class="kv"><span class="k">识别要点</span><span class="v">${esc(plant.eco.split('。').slice(-2).join('。'))}</span></div>
+    ${plant.risk ? `
+    <div class="loc-error" style="background:var(--invasive-soft);color:var(--invasive)">
+      <span style="flex:none;display:flex;margin-top:2px">${icon('alert')}</span>
+      <div><b>入侵生态风险</b><br>${esc(plant.risk)}</div>
+    </div>` : ''}`;
+
+  /* ---------------- 用户观测图集 ---------------- */
+  const gallerySrcs = [1, 2, 3, 4, 5].map(i => plantPhoto(plant.id, i));
+  const authors = ['海河漫步', '五大道扫街', '柳絮飞时', '津门花匠', '白蜡树下'];
+  $('#galleryCount').textContent = `共 ${gallerySrcs.length + 12} 张`;
+  $('#gallery').innerHTML = gallerySrcs.map((src, i) => `
+    <div class="g-item" data-i="${i}">${imgBoxHTML()}</div>`).join('') +
+    `<div class="g-item"><div class="g-more">+12 张<br>进社区查看</div></div>`;
+  $$('#gallery .g-item').forEach((g, i) => {
+    if (i >= gallerySrcs.length) {
+      g.addEventListener('click', () => navigate('community.html', '正在前往科普社区'));
+      return;
+    }
+    mountImg($('.img-box', g), gallerySrcs[i], { delay: 250 + i * 160 });
+    g.addEventListener('click', () => showImagePreview(
+      gallerySrcs.map((s, k) => ({ src: s, caption: `${plant.name} · 用户实拍 · by ${authors[k % authors.length]}` })), i));
+  });
+
+  /* ---------------- 点位预览（小地图） ---------------- */
+  $('#pointCount').textContent = `${plant.pointCount} 个观测点`;
+  $('#miniCanvas').innerHTML = TJ_MAP_SVG;
+  Object.entries(REGION_POS).forEach(([name, [x, y]]) => {
+    const lb = document.createElement('span');
+    lb.className = 'map-region-label';
+    lb.style.left = x + '%'; lb.style.top = y + '%';
+    lb.textContent = name;
+    $('#miniCanvas').appendChild(lb);
+  });
+  points.forEach(pt => {
+    const dot = document.createElement('span');
+    dot.className = 'map-point';
+    dot.style.left = pt.pos[0] + '%'; dot.style.top = pt.pos[1] + '%';
+    dot.style.background = attrColor(plant.attr);
+    dot.title = `${pt.region} · ${pt.place}`;
+    dot.addEventListener('click', () => navigate(`map.html?point=${pt.id}`, '正在定位观测点位'));
+    $('#miniCanvas').appendChild(dot);
+  });
+
+  /* ---------------- 返回 ---------------- */
+  $('#backBtn').addEventListener('click', () => goBack('index.html'));
+  $('#backTop').addEventListener('click', () => goBack('index.html'));
+
+  initCollapsibles();
+</script>
+</body>
+</html>
+
+

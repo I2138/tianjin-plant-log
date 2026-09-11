@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>任务详情 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">任务详情</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 封面大图 -->
+  <div class="hero-section mt-12" style="border-radius:var(--radius-lg);overflow:hidden" id="hero"></div>
+
+  <!-- 折叠面板 1：任务概览（默认展开） -->
+  <div class="collapsible open mt-16" id="col1">
+    <div class="col-head"><span style="color:var(--primary-deep);display:flex" data-ic="list"></span><div class="col-title">任务概览</div><div class="col-arrow" data-ic="chevronDown"></div></div>
+    <div class="col-body"><div class="col-body-inner" id="overviewBody"></div></div>
+  </div>
+
+  <!-- 折叠面板 2：观察要求（默认收起） -->
+  <div class="collapsible" id="col2">
+    <div class="col-head"><span style="color:var(--primary-deep);display:flex" data-ic="book"></span><div class="col-title">推荐物种与采集要求</div><div class="col-arrow" data-ic="chevronDown"></div></div>
+    <div class="col-body"><div class="col-body-inner" id="requireBody"></div></div>
+  </div>
+
+  <!-- 成果预览 -->
+  <div class="section-title"><span class="st-bar"></span>成果预览<span class="st-more">其他参与者的记录</span></div>
+  <div class="h-scroll" id="resultStrip"></div>
+
+  <!-- 我的提交 -->
+  <div class="section-title"><span class="st-bar"></span>我的提交<span class="st-more" id="myCount"></span></div>
+  <div id="mySubmits"></div>
+
+  <div class="action-bar">
+    <button class="btn btn-primary" id="joinBtn" style="flex:1.6"></button>
+    <button class="btn btn-ghost" id="goRecordBtn" style="flex:1"></button>
+  </div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  const task = getTask(qs('id')) || TASKS[0];
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  $$('[data-ic]').forEach(el => el.innerHTML = icon(el.dataset.ic));
+  renderTabbar('task');
+
+  /* ---------------- 封面（骨架加载 + 标题底板） ---------------- */
+  $('#hero').innerHTML = imgBoxHTML('', 'width:100%;height:236px') + `
+    <div class="hero-shade" style="height:150px;flex-direction:column;align-items:flex-start;justify-content:flex-end">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px" id="heroTag"></div>
+      <div class="td-hero-title">${esc(task.name)}</div>
+      <div class="td-hero-intro">${esc(task.desc)}</div>
+    </div>`;
+  mountImg($('#hero .img-box'), plantCover(task.cover), { delay: 650 });
+  $('#heroTag').innerHTML = `<span class="tag soft" style="background:rgba(255,255,255,.9)">${TASK_STATUS[task.status]}</span><span style="opacity:.9;font-size:11px;color:#fff">${task.joinCount} 人参与</span>`;
+
+  /* ---------------- 任务概览 ---------------- */
+  $('#overviewBody').innerHTML = `
+    <div class="kv"><span class="k">任务名称</span><span class="v bold">${esc(task.name)}</span></div>
+    <div class="kv"><span class="k">简介</span><span class="v">${esc(task.desc)}</span></div>
+    <div class="kv"><span class="k">地理范围</span><span class="v">${esc(task.scope)}</span></div>
+    <div class="kv"><span class="k">起止时间</span><span class="v">${task.start} ~ ${task.end}</span></div>
+    <div class="kv"><span class="k">参与情况</span><span class="v">${task.joinCount} 人参与 · 已提交 ${task.submitCount} 条记录</span></div>`;
+
+  /* ---------------- 推荐物种与要求 ---------------- */
+  $('#requireBody').innerHTML = `
+    <div class="form-label" style="margin-bottom:8px">推荐观察物种（点击查看图鉴）</div>
+    ${task.plants.map(pid => {
+    const p = getPlant(pid);
+    return `<div class="fav-plant-item" data-pid="${p.id}">
+        <div class="fp-img">${imgBoxHTML()}</div>
+        <div style="flex:1;min-width:0">
+          <div class="fz-14 bold">${esc(p.name)}</div>
+          <div class="fz-12 text-2" style="font-style:italic">${esc(p.latin)}</div>
+          <div class="mt-8"><span class="tag ${attrClass(p.attr)}">${attrLabel(p.attr)}</span> <span class="tag type">${p.type}</span></div>
+        </div>
+        <span style="color:var(--text-3);display:flex">${icon('chevronRight')}</span>
+      </div>`;
+  }).join('')}
+    <div class="form-label mt-16" style="margin-bottom:8px">采集记录要求</div>
+    <div class="fz-14" style="line-height:1.9;color:#435047">${esc(task.require)}</div>`;
+  $$('#requireBody .fav-plant-item').forEach(el => {
+    mountImg($('.img-box', el), plantCover(+el.dataset.pid), { delay: 260 });
+    el.addEventListener('click', () => navigate(`plant-detail.html?id=${el.dataset.pid}`, '正在查看物种'));
+  });
+
+  /* ---------------- 成果预览 ---------------- */
+  const resultLogs = task.results.map(rid => BUILTIN_LOGS.find(l => l.id === rid)).filter(Boolean);
+  $('#resultStrip').innerHTML = resultLogs.map(l => `
+    <div class="result-card" data-id="${l.id}">
+      <div class="rc-img">${imgBoxHTML()}</div>
+      <div class="rc-body">
+        <div class="rc-name">${esc(getPlant(l.plantId).name)} · ${esc(l.stage)}</div>
+        <div class="rc-meta">${esc(l.author)} · ${esc(l.time.slice(5, 10))}</div>
+      </div>
+    </div>`).join('');
+  $$('#resultStrip .result-card').forEach((el, i) => {
+    const l = resultLogs[i];
+    mountImg($('.img-box', el), plantPhoto(l.plantId, 1), { delay: 300 + i * 120 });
+    el.addEventListener('click', () => navigate(`log-detail.html?id=${l.id}`, '正在查看观察日志'));
+  });
+
+  /* ---------------- 我的提交 ---------------- */
+  function renderMySubmits() {
+    const mine = DB.myLogs().filter(l => l.taskId === task.id);
+    $('#myCount').textContent = mine.length ? `${mine.length} 条` : '';
+    if (!Auth.current()) {
+      $('#mySubmits').innerHTML = `<div class="card card-pad">${emptyStateHTML({ title: '登录后可见', desc: '你在本任务下提交的观察日志\n会显示在这里。', small: true })}</div>`;
+      return;
+    }
+    if (!mine.length) {
+      $('#mySubmits').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+        title: '还没有本任务的提交',
+        desc: '参与任务后，提交观察记录时\n选择关联本任务即可在此展示。',
+        btnIcon: 'camera', small: true,
+      })}</div>`;
+      return;
+    }
+    $('#mySubmits').innerHTML = mine.map(l => `
+      <div class="log-item" data-id="${l.id}">
+        <div class="li-img">${imgBoxHTML()}</div>
+        <div class="li-body">
+          <div class="li-name">${esc(l.plantName || (getPlant(l.plantId) || {}).name || '未命名物种')}</div>
+          <div class="li-place">${esc(l.place)}</div>
+          <div class="li-foot"><span>${esc(l.time)}</span><span class="tag soft">已提交</span></div>
+        </div>
+      </div>`).join('');
+    $$('#mySubmits .log-item').forEach(el => {
+      const l = mine.find(x => x.id === el.dataset.id);
+      mountImg($('.img-box', el), plantPhoto(l.plantId || 3, 1), { delay: 240 });
+      el.addEventListener('click', () => navigate(`log-detail.html?id=${l.id}`, '正在查看日志'));
+    });
+  }
+  renderMySubmits();
+
+  /* ---------------- 参与任务 ---------------- */
+  function syncJoinBtn() {
+    const joined = Auth.current() && DB.joined(task.id);
+    $('#joinBtn').innerHTML = joined ? `${icon('check')} 已参与任务` : `${icon('plus')} 参与任务`;
+    $('#joinBtn').className = joined ? 'btn btn-soft' : 'btn btn-primary';
+    $('#joinBtn').style.flex = '1.6';
+    $('#goRecordBtn').innerHTML = `${icon('camera')} 去记录`;
+  }
+  syncJoinBtn();
+
+  $('#joinBtn').addEventListener('click', () => {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    if (DB.joined(task.id)) { showToast('你已参与该任务，快去提交记录吧'); return; }
+    const btn = $('#joinBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="border-top-color:#fff"></div> 正在加入…';
+    setTimeout(() => {
+      btn.disabled = false;
+      DB.joinTask(task.id);
+      syncJoinBtn();
+      showModal({
+        icon: 'success', title: '参与成功',
+        content: `已加入「${task.name}」！\n点击「去记录」提交你的第一条观察记录。`,
+        confirmText: '去记录', cancelText: '留在本页',
+        onConfirm: () => navigate(`record.html?task=${task.id}`, '正在前往记录页'),
+      });
+    }, 1000);
+  });
+
+  $('#goRecordBtn').addEventListener('click', () => {
+    navigate(`record.html?task=${task.id}`, '正在前往记录页');
+  });
+
+  $('#backBtn').addEventListener('click', () => goBack('task.html'));
+
+  initCollapsibles();
+</script>
+</body>
+</html>
+
+

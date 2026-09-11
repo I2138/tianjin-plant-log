@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>公共观察任务 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="page-title">公共观察任务</div>
+    <div class="spacer"></div>
+    <span class="fz-12 text-2" id="taskTotal"></span>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 状态标签 -->
+  <div class="chips-fade chips-fade-bg mt-12">
+    <div class="chips-scroll" id="statusChips">
+      <button class="chip active" data-v="">全部</button>
+      <button class="chip" data-v="recruiting">正在招募</button>
+      <button class="chip" data-v="ongoing">进行中</button>
+      <button class="chip" data-v="done">已结束</button>
+    </div>
+  </div>
+
+  <!-- 任务列表 -->
+  <div id="taskList" class="mt-16"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  renderTabbar('task');
+
+  let status = '';
+
+  function taskCardHTML(t) {
+    const stTag = { recruiting: 'status-on', ongoing: 'native', done: 'status-done' }[t.status];
+    return `<div class="task-card" data-id="${t.id}">
+      <div class="tk-cover">
+        ${imgBoxHTML()}
+        <div class="tk-shade"></div>
+        <span class="tk-status ${stTag}">${TASK_STATUS[t.status]}</span>
+        <div class="tk-overlay">
+          <div class="tk-otitle">${esc(t.name)}</div>
+          <div class="tk-ointro">${esc(t.desc)}</div>
+        </div>
+      </div>
+      <div class="tk-body">
+        <div class="tk-meta">${icon('pin').replace('16" height="16', '12" height="12"')} ${esc(t.scope)}</div>
+        <div class="tk-meta">${icon('clock')} ${t.start} ~ ${t.end}</div>
+        <div class="tk-stats">
+          <span class="tag soft">${icon('user').replace('22" height="22', '11" height="11"')} ${t.joinCount} 人参与</span>
+          <span class="tag gray">${icon('edit').replace('22" height="22', '11" height="11"')} 已提交 ${t.submitCount} 条</span>
+        </div>
+        <button class="btn btn-soft btn-sm btn-block" data-go>查看详情</button>
+      </div>
+    </div>`;
+  }
+
+  function renderList() {
+    const list = TASKS.filter(t => !status || t.status === status);
+    $('#taskTotal').textContent = `共 ${TASKS.length} 个任务`;
+    if (!list.length) {
+      $('#taskList').innerHTML = `
+        <div class="card card-pad" style="margin-top:6px">
+          ${emptyStateHTML({ title: '该状态下暂无任务', desc: '新的公共观察任务正在筹备中，\n先去看看其他任务吧。', btnText: '查看全部任务' })}
+        </div>`;
+      $('#taskList .btn').addEventListener('click', () => {
+        status = '';
+        $$('#statusChips .chip').forEach((c, i) => c.classList.toggle('active', i === 0));
+        renderListWithLoading();
+      });
+      return;
+    }
+    $('#taskList').innerHTML = list.map(taskCardHTML).join('');
+    $$('#taskList .task-card').forEach(card => {
+      const t = getTask(card.dataset.id);
+      mountImg($('.tk-cover .img-box', card), plantCover(t.cover), { delay: 320 });
+      card.addEventListener('click', e => {
+        if (e.target.closest('[data-no-nav]')) return;
+        navigate(`task-detail.html?id=${t.id}`, '正在查看任务详情');
+      });
+    });
+  }
+
+  function renderListWithLoading() {
+    $('#taskList').innerHTML = Array(2).fill(0).map(() => `
+      <div class="task-sk"><div class="skeleton ts-cover"></div>
+        <div style="padding:15px 16px 18px">
+          <div class="skeleton sk-text" style="width:70%;height:16px"></div>
+          <div class="skeleton sk-text mt-8" style="width:45%;height:11px"></div>
+          <div class="skeleton sk-text mt-8" style="width:90%;height:11px"></div>
+          <div class="skeleton sk-text mt-8" style="width:60%;height:34px;border-radius:10px"></div>
+        </div></div>`).join('');
+    setTimeout(renderList, 620);
+  }
+
+  $('#statusChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    $$('#statusChips .chip').forEach(c => c.classList.toggle('active', c === chip));
+    status = chip.dataset.v;
+    renderListWithLoading();
+  });
+
+  renderListWithLoading();
+</script>
+</body>
+</html>
+
+

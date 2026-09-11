@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>绿化问题上报 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">绿化问题上报</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 骨架屏 -->
+  <div class="form-skeleton" id="rpSkeleton">
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:26%"></div><div class="skeleton sk-text mt-12" style="height:76px"></div></div>
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:30%"></div><div class="skeleton sk-text mt-12" style="height:50px"></div></div>
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:34%"></div><div class="skeleton sk-text mt-12" style="height:84px"></div></div>
+  </div>
+
+  <form id="reportForm" class="hidden" novalidate onsubmit="return false">
+    <!-- 定位 -->
+    <div class="section-title"><span class="st-bar"></span>问题位置<span class="st-more">必填</span></div>
+    <div class="loc-panel">
+      <div class="loc-row">
+        <span style="color:var(--primary-deep);display:flex" id="rpPinIcon"></span>
+        <div class="loc-info">
+          <div class="loc-place" id="rpPlace" style="color:var(--text-3)">尚未获取位置</div>
+          <div class="loc-coord" id="rpCoord">定位后自动填充行政区与坐标</div>
+        </div>
+        <button type="button" class="btn btn-soft btn-sm" id="rpLocate"><span id="rpLocIcon"></span>获取位置</button>
+      </div>
+      <div class="loc-error hidden" id="rpLocError">
+        <span style="flex:none;display:flex;margin-top:2px" id="rpErrIcon"></span>
+        <div style="flex:1">定位失败：请检查定位权限，或使用地图手动选点。</div>
+        <button type="button" class="btn btn-soft btn-sm" style="flex:none" id="rpPickMap">地图选点</button>
+      </div>
+      <div class="hidden mt-12 center" id="rpLocLoading">
+        <div class="radar"><i></i><i></i><i></i><div class="radar-dot"></div></div>
+        <div class="fz-12 text-2 mt-8">正在获取位置…</div>
+      </div>
+    </div>
+
+    <!-- 植物选择（搜索下拉） -->
+    <div class="section-title"><span class="st-bar"></span>涉及植物<span class="st-more">不确定可留空</span></div>
+    <div class="form-card">
+      <div class="form-group" style="margin-bottom:0">
+        <div class="search-bar" id="plantSearch" style="height:42px;border-radius:var(--radius-sm);background:var(--bg-soft)">
+          <span class="s-icon" id="psIcon"></span>
+          <span class="s-loading"><div class="spinner" style="width:15px;height:15px;border-width:2px"></div></span>
+          <input id="plantInput" placeholder="搜索植物名称（如：国槐）">
+          <button type="button" class="s-clear" id="psClear"></button>
+        </div>
+        <div class="fake-select-list hidden" id="plantCandidates" style="margin-top:8px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:#fff;max-height:220px;overflow-y:auto"></div>
+        <div class="form-hint">将自动匹配图鉴库中的候选物种</div>
+      </div>
+    </div>
+
+    <!-- 问题类型 -->
+    <div class="section-title"><span class="st-bar"></span>问题类型<span class="st-more">必填</span></div>
+    <div class="form-card">
+      <div class="form-group" data-field="type" style="margin-bottom:0">
+        <div id="fsType"></div>
+        <div class="form-error-tip">请选择问题类型</div>
+      </div>
+    </div>
+
+    <!-- 图片上传 -->
+    <div class="section-title"><span class="st-bar"></span>现场照片<span class="st-more">最多 6 张</span></div>
+    <div class="upload-zone">
+      <button type="button" class="upload-btn" id="rpCam"><span id="rpCamIcon"></span>拍照上传</button>
+      <button type="button" class="upload-btn" id="rpAlbum"><span id="rpAlbIcon"></span>从相册选择</button>
+    </div>
+    <div class="upload-list" id="rpUploadList"></div>
+
+    <!-- 详细描述 -->
+    <div class="section-title"><span class="st-bar"></span>详细描述<span class="st-more">必填</span></div>
+    <div class="form-card">
+      <div class="form-group" data-field="desc" style="margin-bottom:0">
+        <textarea class="form-textarea" id="rpDesc" placeholder="描述问题的具体情况：位置细节、影响范围、发现时间等…"></textarea>
+        <div class="form-error-tip">请填写问题描述（至少 5 个字）</div>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary btn-block mt-20" id="rpSubmit">提交上报</button>
+    <div class="form-hint center mt-12">提交后可在「我的 · 我的上报」中查看处理进度</div>
+  </form>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  $('#rpPinIcon').innerHTML = icon('pin');
+  $('#rpLocIcon').innerHTML = icon('locate');
+  $('#rpErrIcon').innerHTML = icon('alert');
+  $('#rpCamIcon').innerHTML = icon('camera');
+  $('#rpAlbIcon').innerHTML = icon('image');
+  $('#psIcon').innerHTML = icon('search');
+  $('#psClear').innerHTML = icon('close');
+
+  const rf = { plantId: null, plantName: '', photoSeeds: [], place: '', coords: '' };
+
+  /* ---------------- 定位（复用逻辑） ---------------- */
+  $('#rpLocate').addEventListener('click', () => {
+    const btn = $('#rpLocate');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    $('#rpLocError').classList.add('hidden');
+    $('#rpLocLoading').classList.remove('hidden');
+    setTimeout(() => {
+      btn.disabled = false;
+      $('#rpLocLoading').classList.add('hidden');
+      if (Math.random() < 0.18) { $('#rpLocError').classList.remove('hidden'); return; }
+      const pt = MAP_POINTS[Math.floor(Math.random() * MAP_POINTS.length)];
+      fillLoc(`${pt.region}区 · ${pt.place.split('·').pop().trim()}`, `${(117 + Math.random()).toFixed(4)}°E, ${(39 + Math.random() * 0.3).toFixed(4)}°N`);
+      showToast('定位成功');
+    }, 1100);
+  });
+
+  function fillLoc(place, coords) {
+    rf.place = place; rf.coords = coords;
+    $('#rpPlace').textContent = place;
+    $('#rpPlace').style.color = 'var(--text)';
+    $('#rpCoord').textContent = coords;
+  }
+
+  $('#rpPickMap').addEventListener('click', () => {
+    const { close, panel } = showSheet('地图选点', `
+      <div class="fz-12 text-2" style="margin-bottom:10px">点击地图放置图钉，确认后填充上报位置。</div>
+      <div class="mini-map" id="rpPickMapBox" style="height:300px;cursor:crosshair"><div class="map-canvas" id="rpPickCanvas"></div></div>
+      <div class="fz-13 mt-12 center text-2" id="rpPickInfo">尚未选点</div>
+      <button type="button" class="btn btn-primary btn-block mt-16" id="rpPickOk" disabled>确认选点</button>`);
+    const pc = panel.querySelector('#rpPickCanvas');
+    pc.innerHTML = TJ_MAP_SVG;
+    Object.entries(REGION_POS).forEach(([name, [x, y]]) => {
+      const lb = document.createElement('span');
+      lb.className = 'map-region-label'; lb.style.left = x + '%'; lb.style.top = y + '%'; lb.textContent = name;
+      pc.appendChild(lb);
+    });
+    let picked = null;
+    panel.querySelector('#rpPickMapBox').addEventListener('click', e => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width * 100, y = (e.clientY - rect.top) / rect.height * 100;
+      pc.querySelectorAll('.map-user-pin').forEach(p => p.remove());
+      const pin = document.createElement('div');
+      pin.className = 'map-user-pin'; pin.style.left = x + '%'; pin.style.top = y + '%';
+      pin.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="#46604C"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="3" fill="#fff"/></svg>`;
+      pc.appendChild(pin);
+      let best = null, bd = 1e9;
+      Object.entries(REGION_POS).forEach(([name, [rx, ry]]) => {
+        const d = Math.hypot(rx - x, ry - y);
+        if (d < bd) { bd = d; best = name; }
+      });
+      picked = { x, y, region: best };
+      panel.querySelector('#rpPickInfo').innerHTML = `已选择：<b style="color:var(--primary-deep)">${best}区</b> 附近`;
+      panel.querySelector('#rpPickOk').disabled = false;
+    });
+    panel.querySelector('#rpPickOk').addEventListener('click', () => {
+      const spots = ['街心花园', '道路绿化带', '社区绿地', '河岸步道', '公园东侧'];
+      fillLoc(`${picked.region}区 · ${spots[Math.floor(Math.random() * spots.length)]}`, `${(116.8 + picked.x / 100 * 0.8).toFixed(4)}°E, ${(38.6 + picked.y / 100 * 0.9).toFixed(4)}°N`);
+      close();
+      showToast('已通过地图选点填充位置');
+    });
+  });
+
+  /* ---------------- 植物搜索下拉 ---------------- */
+  const doPlantSearch = debounce(() => {
+    const kw = $('#plantInput').value.trim();
+    $('#plantSearch').classList.remove('searching');
+    if (!kw) { $('#plantCandidates').classList.add('hidden'); return; }
+    $('#plantSearch').classList.add('searching');
+    /* 模拟候选列表加载 */
+    setTimeout(() => {
+      $('#plantSearch').classList.remove('searching');
+      const hits = PLANTS.filter(p => p.name.includes(kw) || p.family.includes(kw)).slice(0, 6);
+      const box = $('#plantCandidates');
+      if (!hits.length) {
+        box.innerHTML = `<div class="center text-3" style="padding:16px;font-size:13px">未找到相关植物，可直接提交</div>`;
+      } else {
+        box.innerHTML = hits.map(p => `
+          <div class="flex" data-pid="${p.id}" style="gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line)">
+            <div style="width:42px;height:42px;border-radius:9px;overflow:hidden;flex:none">${imgBoxHTML()}</div>
+            <div style="flex:1;min-width:0">
+              <div class="fz-14 bold">${esc(p.name)}</div>
+              <div class="fz-12 text-2">${esc(p.family)}</div>
+            </div>
+            <span class="tag ${attrClass(p.attr)}" style="align-self:center">${attrLabel(p.attr)}</span>
+          </div>`).join('');
+        $$('#plantCandidates [data-pid]').forEach(row => {
+          const p = getPlant(row.dataset.pid);
+          mountImg($('.img-box', row), plantCover(p.id), { delay: 120 });
+          row.addEventListener('click', () => {
+            rf.plantId = p.id; rf.plantName = p.name;
+            $('#plantInput').value = p.name;
+            $('#plantCandidates').classList.add('hidden');
+            showToast(`已选择：${p.name}`);
+          });
+        });
+      }
+      box.classList.remove('hidden');
+    }, 550);
+  }, 500);
+
+  $('#plantInput').addEventListener('input', e => {
+    $('#plantSearch').classList.toggle('has-text', !!e.target.value.trim());
+    doPlantSearch();
+  });
+  $('#psClear').addEventListener('click', () => {
+    $('#plantInput').value = '';
+    $('#plantSearch').classList.remove('has-text');
+    $('#plantCandidates').classList.add('hidden');
+    rf.plantId = null; rf.plantName = '';
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#plantSearch') && !e.target.closest('#plantCandidates')) $('#plantCandidates').classList.add('hidden');
+  });
+
+  /* ---------------- 图片上传 ---------------- */
+  let uploadSeq = 0;
+  function uploadPhotos(n) {
+    const list = $('#rpUploadList');
+    for (let i = 0; i < n; i++) {
+      const seed = ++uploadSeq;
+      const fail = Math.random() < 0.12;
+      const el = document.createElement('div');
+      el.className = 'upload-item';
+      el.innerHTML = `<div class="up-box">
+          ${imgBoxHTML()}
+          <div class="up-mask"><span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div></div>
+        </div>
+        <button type="button" class="up-del">${icon('close')}</button>
+        <div class="up-fail-tip hidden">上传失败</div>`;
+      list.appendChild(el);
+      runUpload(el, seed, fail, i * 240);
+    }
+  }
+  function runUpload(el, seed, fail, delay) {
+    let p = 0;
+    setTimeout(() => {
+      const timer = setInterval(() => {
+        p = Math.min(100, p + 5 + Math.random() * 10);
+        const bar = $('.progress-bar', el), pct = $('.up-pct', el);
+        if (!bar) { clearInterval(timer); return; }
+        bar.style.width = p + '%'; pct.textContent = Math.round(p) + '%';
+        if (p >= 100) {
+          clearInterval(timer);
+          const mask = $('.up-mask', el);
+          if (fail) {
+            if (mask) mask.remove();
+            const box = $('.img-box', el);
+            box.classList.add('failed');
+            box.querySelector('.retry-btn').textContent = '重新上传';
+            $('.up-fail-tip', el).classList.remove('hidden');
+            box.querySelector('.retry-btn').onclick = e => {
+              e.stopPropagation();
+              box.classList.remove('failed');
+              $('.up-fail-tip', el).classList.add('hidden');
+              const m2 = document.createElement('div');
+              m2.className = 'up-mask';
+              m2.innerHTML = '<span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div>';
+              $('.up-box', el).insertBefore(m2, box);
+              runUpload(el, seed, false, 0);
+            };
+            return;
+          }
+          if (mask) { mask.style.opacity = '0'; setTimeout(() => mask.remove(), 280); }
+          mountImg($('.img-box', el), plantPhoto(rf.plantId || 1, seed), { delay: 100 });
+          rf.photoSeeds.push(seed);
+          if (!el._bound) {
+            el._bound = true;
+            $('.up-box', el).addEventListener('click', () => {
+              const done = $$('#rpUploadList .upload-item').filter(x => !$('.up-mask', x) && !$('.img-box.failed', x));
+              if (done.length) showImagePreview(done.map((d, i) => ({ src: plantPhoto(rf.plantId || 1, i + 1), caption: '上报现场照片' })));
+            });
+          }
+        }
+      }, 85);
+    }, delay + 280);
+  }
+  $('#rpUploadList').addEventListener('click', e => {
+    const del = e.target.closest('.up-del');
+    if (del) del.closest('.upload-item').remove();
+  });
+  $('#rpCam').addEventListener('click', () => uploadPhotos(1));
+  $('#rpAlbum').addEventListener('click', () => uploadPhotos(1 + Math.floor(Math.random() * 3)));
+
+  /* ---------------- 问题类型下拉 ---------------- */
+  $('#fsType').innerHTML = fakeSelectHTML(REPORT_TYPES, { placeholder: '请选择问题类型', name: 'type' });
+  initFakeSelects(document);
+
+  /* ---------------- 提交 ---------------- */
+  $('#rpSubmit').addEventListener('click', () => {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    const type = fsValue('type');
+    const desc = $('#rpDesc').value.trim();
+    const missing = [];
+    if (!rf.place) missing.push('问题位置（定位或地图选点）');
+    if (!type) missing.push('问题类型');
+    if (desc.length < 5) missing.push('详细描述（至少 5 个字）');
+    if (missing.length) {
+      $('#reportForm [data-field="type"]').classList.toggle('error', !type);
+      $('#reportForm [data-field="desc"]').classList.toggle('error', desc.length < 5);
+      showModal({ icon: 'error', title: '还有必填项未完成', content: missing.map(m => '· ' + m).join('\n'), confirmText: '去补充' });
+      return;
+    }
+    const btn = $('#rpSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="border-top-color:#fff"></div> 提交中…';
+    setTimeout(() => {
+      DB.addReport({
+        type, plantId: rf.plantId || null, plantName: rf.plantName || '（未指定植物）',
+        place: rf.place, coords: rf.coords || '117.2000°E, 39.1200°N',
+        desc, time: _nowFull(), photoSeeds: rf.photoSeeds.slice(0, 3),
+      });
+      btn.disabled = false; btn.textContent = '提交上报';
+      showModal({
+        icon: 'success', title: '上报成功',
+        content: '感谢你对城市绿化的关注！\n处理进度可在「我的上报」中查看，\n受理后会有处理反馈。',
+        confirmText: '查看我的上报', cancelText: '继续逛逛',
+        onConfirm: () => navigate('my-reports.html', '正在查看我的上报'),
+        onCancel: () => goBack('profile.html'),
+      });
+    }, 1300);
+  });
+
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+
+  /* 进入页面：骨架 → 表单 */
+  setTimeout(() => {
+    $('#rpSkeleton').classList.add('hidden');
+    $('#reportForm').classList.remove('hidden');
+  }, 620);
+</script>
+</body>
+</html>
+
+
+

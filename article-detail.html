@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>科普文章 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">科普文章</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <div id="artHost"></div>
+  <div class="artd-actions" id="actions"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  const doc = getArticle(qs('id')) || ARTICLES[0];
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('atlas');
+
+  const isMoment = doc.kind === 'moment';
+  const figs = [];
+
+  $('#artHost').innerHTML = `
+    <div class="artd-hero mt-12" style="border-radius:var(--radius-lg);overflow:hidden">${imgBoxHTML('', 'width:100%;height:220px')}</div>
+    <div class="artd-title mt-16">${esc(doc.title)}</div>
+    <div class="artd-meta">
+      <span>${esc(doc.author)}</span><span>·</span><span>${esc(doc.time)}</span>
+      <span class="tag ${isMoment ? 'soft' : 'gray'}" style="margin-left:auto">${isMoment ? '观察动态' : '科普文章'}</span>
+    </div>
+    <div class="artd-content mt-16">
+      ${doc.body.map((b, i) => b.t === 'p' ? `<p>${esc(b.c)}</p>` : `
+        <figure class="artd-figure">
+          <div class="fig-box" data-fig="${figs.length}" style="cursor:zoom-in">${imgBoxHTML()}</div>
+          <figcaption>${esc(b.c)}</figcaption>
+        </figure>`).join('')}
+    </div>`;
+
+  /* 封面加载 */
+  mountImg($('#artHost .artd-hero .img-box'), plantCover(doc.cover), { delay: 520 });
+
+  /* 插图加载 + 全屏预览 */
+  const figBoxes = $$('#artHost .fig-box');
+  figBoxes.forEach((fb, i) => {
+    const src = plantPhoto(doc.body.filter(b => b.t === 'img')[i]?.k || 3, i + 2);
+    figs.push(src);
+    mountImg($('.img-box', fb), src, { delay: 400 + i * 180 });
+    fb.addEventListener('click', () => showImagePreview(figs.map(s => ({ src: s, caption: doc.title })), i));
+  });
+
+  /* ---------------- 点赞 / 评论 / 收藏 ---------------- */
+  const myCmts = () => (Auth.current() && UD.get('artComments', {})[doc.id]) || [];
+
+  function renderActions() {
+    const liked = Auth.current() && DB.artLiked(doc.id);
+    const faved = Auth.current() && DB.isFavArt(doc.id);
+    $('#actions').innerHTML = `
+      <button class="btn ${liked ? 'btn-danger' : 'btn-ghost'}" id="likeBtn">${liked ? icon('heartFill') : icon('heart')} 点赞 ${doc.likes + (liked ? 1 : 0)}</button>
+      <button class="btn btn-ghost" id="cmtBtn">${icon('comment')} 评论 ${(doc.comments || 0) + myCmts().length}</button>
+      <button class="btn ${faved ? 'btn-soft' : 'btn-ghost'}" id="favBtn">${faved ? icon('starFill') : icon('star')} ${faved ? '已收藏' : '收藏'}</button>`;
+    $('#likeBtn').addEventListener('click', () => {
+      if (!Auth.current()) { requireLoginToast(); return; }
+      DB.toggleArtLike(doc.id); renderActions();
+    });
+    $('#favBtn').addEventListener('click', () => {
+      if (!Auth.current()) { requireLoginToast(); return; }
+      const added = DB.toggleFavArt(doc.id);
+      showToast(added ? '已收藏到「我的收藏」' : '已取消收藏');
+      renderActions();
+    });
+    $('#cmtBtn').addEventListener('click', openComments);
+  }
+  renderActions();
+
+  function openComments() {
+    const my = myCmts();
+    const all = [...my, ...BUILTIN_COMMENTS];
+    const { close, panel } = showSheet(`评论 · ${all.length} 条`, `
+      <div id="cmtList">${all.map(c => `
+        <div class="comment-item">
+          <div class="cm-avatar"><img src="${avatar(c.name, 34)}" alt=""></div>
+          <div class="cm-body">
+            <div class="cm-name">${esc(c.name)}</div>
+            <div class="cm-text">${esc(c.text)}</div>
+            <div class="cm-time">${esc(c.time)}</div>
+          </div>
+        </div>`).join('')}</div>
+      <div class="flex mt-16" style="gap:10px">
+        <input class="form-input" id="cmtInput" placeholder="说说你的看法…" style="flex:1">
+        <button class="btn btn-primary btn-sm" id="cmtSend" style="flex:none">${icon('send')} 发布</button>
+      </div>`);
+    panel.querySelector('#cmtSend').addEventListener('click', () => {
+      if (!Auth.current()) { close(); requireLoginToast(); return; }
+      const txt = panel.querySelector('#cmtInput').value.trim();
+      if (!txt) { showToast('评论内容不能为空'); return; }
+      const store = UD.get('artComments', {});
+      store[doc.id] = [{ name: Auth.current().name, time: '刚刚', text: txt }, ...(store[doc.id] || [])];
+      UD.set('artComments', store);
+      close(); showToast('评论发布成功');
+      renderActions();
+    });
+  }
+
+  $('#backBtn').addEventListener('click', () => goBack('community.html'));
+</script>
+</body>
+</html>
+
+
+

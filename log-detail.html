@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>观察日志 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">观察日志</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 图集骨架 -->
+  <div id="galleryHost"></div>
+
+  <!-- 信息分层卡片 -->
+  <div id="infoHost" class="mt-16"></div>
+
+  <!-- 交互按钮 -->
+  <div class="log-interact" id="interactHost"></div>
+
+  <button class="btn btn-primary btn-block mt-16" id="backBottom" style="margin-bottom:6px">返回记录页</button>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('record');
+
+  /* ---------------- 获取日志（内置 / 用户 / 地图合成） ---------------- */
+  const id = qs('id') || 'l1';
+  let log = DB.getLog(id);
+  let dynPoint = null;
+  if (!log && id.startsWith('dyn_')) {
+    dynPoint = getPoint(id.slice(4));
+    if (dynPoint) {
+      const p = getPlant(dynPoint.plantId);
+      log = {
+        id, plantId: p.id, author: '城市观察员', time: dynPoint.time + ' 10:00',
+        stage: ['展叶', '开花', '结果'][dynPoint.plantId % 3], health: '健康',
+        note: `${p.name}的日常观测记录。该点位位于${dynPoint.region}区${dynPoint.place}，由市民共建观察网络收录。`,
+        place: `${dynPoint.region}区 · ${dynPoint.place}`, coords: '117.2000°E, 39.1100°N',
+        likes: 3 + dynPoint.plantId % 9, comments: 1, photos: 3,
+      };
+    }
+  }
+  if (!log) { document.body.innerHTML = emptyStateHTML({ title: '日志不存在或已删除', desc: '该观察记录可能已被作者删除', btnText: '返回图鉴', btnUrl: 'index.html' }); renderTabbar('atlas'); }
+  else init();
+
+  function init() {
+    const plant = getPlant(log.plantId) || PLANTS[0];
+    const photoCount = log.photoSeeds ? log.photoSeeds.length : (log.photos || 3);
+    const srcs = Array.from({ length: Math.min(photoCount, 6) }, (_, i) => plantPhoto(plant.id, i + 1));
+
+    /* ---------------- 图集 ---------------- */
+    $('#galleryHost').innerHTML = `
+      <div class="section-title" style="margin-top:16px"><span class="st-bar"></span>现场图集<span class="st-more">共 ${srcs.length} 张 · 点击查看大图</span></div>
+      <div class="gallery-strip" id="gallery"></div>`;
+    $('#gallery').innerHTML = srcs.map((s, i) => `<div class="g-item" data-i="${i}" style="width:150px;height:112px">${imgBoxHTML()}</div>`).join('');
+    $$('#gallery .g-item').forEach((g, i) => {
+      mountImg($('.img-box', g), srcs[i], { delay: 260 + i * 140 });
+      g.addEventListener('click', () => showImagePreview(srcs.map(s => ({ src: s, caption: `${plant.name} · ${log.place}` })), i));
+    });
+
+    /* ---------------- 信息分层卡片 ---------------- */
+    const healthTag = { '健康': 'native', '病虫害': 'invasive', '枯萎': 'invasive', '缺水': 'exotic', '人为损伤': 'exotic' }[log.health] || 'gray';
+    const plantCard = plant ? `
+      <div class="log-info-card" style="cursor:pointer" id="plantCard">
+        <div class="lic-title">${icon('book').replace('16" height="16', '14" height="14"')}植物基础信息</div>
+        <div class="flex" style="gap:12px">
+          <div style="width:64px;height:64px;border-radius:11px;overflow:hidden;flex:none">${imgBoxHTML()}</div>
+          <div style="flex:1;min-width:0">
+            <div class="fz-15 bold">${esc(plant.name)} ${log.plantName && log.plantName !== plant.name ? `（记录名：${esc(log.plantName)}）` : ''}</div>
+            <div class="fz-12 text-2" style="font-style:italic;margin:2px 0 6px">${esc(plant.latin)}</div>
+            <div><span class="tag ${attrClass(plant.attr)}">${attrLabel(plant.attr)}</span> <span class="tag type">${plant.type}</span></div>
+          </div>
+        </div>
+      </div>` : '';
+
+    $('#infoHost').innerHTML = `
+      <div class="log-info-card">
+        <div class="lic-title">${icon('pin').replace('16" height="16', '14" height="14"')}观测点位</div>
+        <div class="fz-15 bold">${esc(log.place)}</div>
+        <div class="fz-12 text-3 mt-8">${esc(log.coords || '')}</div>
+      </div>
+      <div class="log-info-card">
+        <div class="lic-title">${icon('clock')}记录信息</div>
+        <div class="kv"><span class="k">记录时间</span><span class="v">${esc(log.time)}</span></div>
+        <div class="kv"><span class="k">观察者</span><span class="v">${esc(log.author)}${log.mine ? ' <span class="tag soft">我</span>' : ''}</span></div>
+      </div>
+      ${plantCard}
+      <div class="log-info-card">
+        <div class="lic-title">${icon('eye').replace('16" height="16', '14" height="14"')}生长状态</div>
+        <div class="flex" style="gap:8px">
+          <span class="tag soft" style="font-size:13px;padding:7px 13px">${esc(log.stage)}</span>
+        </div>
+      </div>
+      <div class="log-info-card">
+        <div class="lic-title">${icon('alert').replace('26" height="26', '14" height="14"')}健康状态</div>
+        <span class="tag ${healthTag}" style="font-size:13px;padding:7px 13px">${esc(log.health)}</span>
+      </div>
+      <div class="log-info-card">
+        <div class="lic-title">${icon('comment').replace('15" height="15', '14" height="14"')}用户备注</div>
+        <div class="fz-14" style="line-height:1.85;color:#435047">${esc(log.note)}</div>
+      </div>`;
+
+    if (plantCard) {
+      mountImg($('#plantCard .img-box'), plantCover(plant.id), { delay: 300 });
+      $('#plantCard').addEventListener('click', () => navigate(`plant-detail.html?id=${plant.id}`, `正在查看「${plant.name}」`));
+    }
+
+    /* ---------------- 点赞 / 评论 / 地图 ---------------- */
+    const likedNow = () => Auth.current() && DB.liked(log.id);
+    const myCmts = () => (Auth.current() && UD.get('myComments', {})[log.id]) || [];
+
+    function renderInteract() {
+      const base = log.likes || 0;
+      const liked = likedNow();
+      const cmtCount = (log.comments || 0) + myCmts().length;
+      $('#interactHost').innerHTML = `
+        <button class="btn ${liked ? 'btn-danger' : 'btn-ghost'}" id="likeBtn">
+          ${liked ? icon('heartFill') : icon('heart')} ${'赞'} ${base + (liked ? 1 : 0)}</button>
+        <button class="btn btn-ghost" id="cmtBtn">${icon('comment')} 评论 ${cmtCount}</button>
+        <button class="btn btn-primary" id="mapBtn">${icon('map')} 在地图查看点位</button>`;
+      $('#likeBtn').addEventListener('click', () => {
+        if (!Auth.current()) { requireLoginToast(); return; }
+        DB.toggleLike(log.id); renderInteract();
+      });
+      $('#cmtBtn').addEventListener('click', openComments);
+      $('#mapBtn').addEventListener('click', () => {
+        let pid = log.pointId || (dynPoint ? dynPoint.id : null);
+        if (!pid) {
+          const region = (log.place || '').slice(0, 2);
+          const hit = MAP_POINTS.find(p => p.region === region && p.plantId === plant.id) || MAP_POINTS.find(p => p.plantId === plant.id);
+          pid = hit ? hit.id : null;
+        }
+        navigate(pid ? `map.html?point=${pid}` : 'map.html', '正在定位观测点位');
+      });
+    }
+    renderInteract();
+
+    /* ---------------- 评论面板 ---------------- */
+    function openComments() {
+      const my = myCmts();
+      const all = [...my, ...BUILTIN_COMMENTS];
+      const { close, panel } = showSheet(`评论 · ${all.length} 条`, `
+        <div id="cmtList">${all.map(c => `
+          <div class="comment-item">
+            <div class="cm-avatar"><img src="${avatar(c.name, 34)}" alt=""></div>
+            <div class="cm-body">
+              <div class="cm-name">${esc(c.name)}</div>
+              <div class="cm-text">${esc(c.text)}</div>
+              <div class="cm-time">${esc(c.time)}</div>
+            </div>
+          </div>`).join('')}</div>
+        <div class="flex mt-16" style="gap:10px">
+          <input class="form-input" id="cmtInput" placeholder="友善发言，和而不同…" style="flex:1">
+          <button class="btn btn-primary btn-sm" id="cmtSend" style="flex:none">${icon('send')} 发布</button>
+        </div>`);
+      panel.querySelector('#cmtSend').addEventListener('click', () => {
+        if (!Auth.current()) { close(); requireLoginToast(); return; }
+        const txt = panel.querySelector('#cmtInput').value.trim();
+        if (!txt) { showToast('评论内容不能为空'); return; }
+        const store = UD.get('myComments', {});
+        store[log.id] = [{ name: Auth.current().name, time: '刚刚', text: txt }, ...(store[log.id] || [])];
+        UD.set('myComments', store);
+        close(); showToast('评论发布成功');
+        renderInteract();
+      });
+    }
+
+    $('#backBtn').addEventListener('click', () => goBack('record.html'));
+    $('#backBottom').addEventListener('click', () => goBack('record.html'));
+  }
+</script>
+</body>
+</html>
+
+

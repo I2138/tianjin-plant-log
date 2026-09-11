@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>新建观察记录 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="page-title">新建植物观察记录</div>
+    <div class="spacer"></div>
+    <button class="h-btn" id="hDraft">保存草稿</button>
+    <button class="h-btn strong" id="hSubmit">提交发布</button>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- 骨架屏（进入页面时） -->
+  <div class="form-skeleton" id="formSkeleton">
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:34%"></div>
+      <div class="skeleton sk-text mt-12" style="height:100px"></div></div>
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:28%"></div>
+      <div class="skeleton sk-text mt-12" style="height:120px"></div></div>
+    <div class="fs-block"><div class="skeleton" style="height:20px;width:30%"></div>
+      <div class="skeleton sk-text mt-12" style="height:52px"></div>
+      <div class="skeleton sk-text mt-8" style="height:52px"></div>
+      <div class="skeleton sk-text mt-8" style="height:52px"></div></div>
+  </div>
+
+  <form id="recordForm" class="hidden" novalidate onsubmit="return false">
+
+    <!-- 图片上传 -->
+    <div class="section-title"><span class="st-bar"></span>现场照片<span class="st-more">最多 9 张</span></div>
+    <div class="upload-zone">
+      <button type="button" class="upload-btn" id="btnCamera"><span id="camIcon"></span>拍照上传</button>
+      <button type="button" class="upload-btn" id="btnAlbum"><span id="albIcon"></span>从相册选择</button>
+    </div>
+    <div class="upload-list" id="uploadList"></div>
+
+    <!-- AI 识别 -->
+    <div class="section-title"><span class="st-bar"></span>AI 识别<span class="st-more">模拟能力 · 可手动校正</span></div>
+    <div class="ai-panel">
+      <div class="ai-head"><span style="display:flex"></span>物种识别<span class="ai-badge" id="aiBadge">等待图片</span></div>
+      <div id="aiArea">
+        <div class="form-hint" style="margin:10px 0 0">上传现场照片后，将自动进行 AI 物种识别。</div>
+      </div>
+    </div>
+
+    <!-- 定位 -->
+    <div class="section-title"><span class="st-bar"></span>观测点位<span class="st-more">必填</span></div>
+    <div class="loc-panel">
+      <div class="loc-row">
+        <span style="color:var(--primary-deep);display:flex" id="locPinIcon"></span>
+        <div class="loc-info">
+          <div class="loc-place" id="locPlace" style="color:var(--text-3)">尚未获取位置</div>
+          <div class="loc-coord" id="locCoord">点击右侧按钮获取当前位置</div>
+        </div>
+        <button type="button" class="btn btn-soft btn-sm" id="btnLocate"><span id="btnLocateIcon"></span>获取位置</button>
+      </div>
+      <div class="loc-error hidden" id="locError">
+        <span style="flex:none;display:flex;margin-top:2px" id="locErrIcon"></span>
+        <div style="flex:1">定位失败：未能获取当前位置，请检查定位权限，或在地图上手动选点。</div>
+        <button type="button" class="btn btn-soft btn-sm" style="flex:none" id="btnPickMap">地图选点</button>
+      </div>
+      <div class="hidden mt-12 center" id="locLoading">
+        <div class="radar"><i></i><i></i><i></i><div class="radar-dot"></div></div>
+        <div class="fz-12 text-2 mt-8">正在获取位置…</div>
+      </div>
+    </div>
+
+    <!-- 分层表单 -->
+    <div class="section-title"><span class="st-bar"></span>观察信息<span class="st-more">必填项已标注</span></div>
+    <div class="form-card">
+      <div class="form-group" data-field="stage">
+        <div class="form-label">生长阶段<span class="req">*</span></div>
+        <div id="fsStage"></div>
+        <div class="form-error-tip">请选择生长阶段</div>
+      </div>
+      <div class="form-group" data-field="health">
+        <div class="form-label">健康状态</div>
+        <div id="fsHealth"></div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">环境备注</div>
+        <textarea class="form-textarea" id="noteInput" placeholder="光照、积水、土壤、周边环境…（例如：向阳处，土壤湿润，紧邻人行道）"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <div class="form-label">生境类型（可多选）</div>
+        <div class="check-tags" id="habitatTags"></div>
+      </div>
+    </div>
+
+    <!-- 底部操作 -->
+    <div class="action-bar">
+      <button type="button" class="btn btn-ghost" id="draftBtn">保存草稿</button>
+      <button type="button" class="btn btn-primary" id="submitBtn">提交发布</button>
+    </div>
+  </form>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#camIcon').innerHTML = icon('camera');
+  $('#albIcon').innerHTML = icon('image');
+  $('#locPinIcon').innerHTML = icon('pin');
+  $('#btnLocateIcon').innerHTML = icon('locate');
+  $('#locErrIcon').innerHTML = icon('alert');
+  $('#aiArea').previousElementSibling.querySelector('span').innerHTML = icon('sprout');
+  renderTabbar('record');
+
+  /* ---------------- 状态 ---------------- */
+  const form = {
+    photoSeeds: [],      // 已上传图片 seed
+    failedSeeds: [],
+    plantId: null, plantName: '', family: '',
+    place: '', coords: '',
+    stage: '', health: '', note: '', habitats: [],
+  };
+  let aiRunning = false;
+
+  const HABITATS = ['行道树', '公园绿地', '社区绿地', '河岸湿地', '街角野生植被'];
+  $('#habitatTags').innerHTML = HABITATS.map(h => `<button type="button" class="check-tag" data-h="${h}"><span class="ct-dot"></span>${h}</button>`).join('');
+  $$('#habitatTags .check-tag').forEach(t => t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    form.habitats = $$('#habitatTags .check-tag.on').map(x => x.dataset.h);
+  }));
+
+  /* ---------------- 图片上传（模拟进度条 + 随机失败） ---------------- */
+  function uploadPhotos(n) {
+    const list = $('#uploadList');
+    const base = form.photoSeeds.length + form.failedSeeds.length;
+    const items = [];
+    for (let i = 0; i < n; i++) {
+      const seed = base + i + 1;
+      const fail = Math.random() < 0.14;
+      const el = document.createElement('div');
+      el.className = 'upload-item';
+      el.innerHTML = `<div class="up-box">
+          ${imgBoxHTML()}
+          <div class="up-mask"><span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div></div>
+        </div>
+        <button type="button" class="up-del">${icon('close')}</button>
+        <div class="up-fail-tip hidden">上传失败</div>`;
+      list.appendChild(el);
+      items.push({ el, seed, fail });
+    }
+    items.forEach((it, idx) => runUpload(it, idx * 260));
+  }
+
+  function runUpload(it, delay) {
+    const bar = $('.progress-bar', it.el), pct = $('.up-pct', it.el);
+    let p = 0;
+    setTimeout(() => {
+      const timer = setInterval(() => {
+        p = Math.min(100, p + 4 + Math.random() * 9);
+        bar.style.width = p + '%';
+        pct.textContent = Math.round(p) + '%';
+        if (p >= 100) {
+          clearInterval(timer);
+          const mask = $('.up-mask', it.el);
+          if (it.fail) {
+            if (mask) mask.remove();
+            const box = $('.img-box', it.el);
+            box.classList.add('failed');
+            box.querySelector('.retry-btn').textContent = '重新上传';
+            $('.up-fail-tip', it.el).classList.remove('hidden');
+            box.querySelector('.retry-btn').onclick = e => {
+              e.stopPropagation();
+              box.classList.remove('failed');
+              $('.up-fail-tip', it.el).classList.add('hidden');
+              const m2 = document.createElement('div');
+              m2.className = 'up-mask';
+              m2.innerHTML = '<span class="up-pct">0%</span><div class="progress"><div class="progress-bar"></div></div>';
+              $('.up-box', it.el).insertBefore(m2, box);
+              it.fail = false;
+              runUpload(it, 0);
+            };
+            form.failedSeeds.push(it.seed);
+            return;
+          }
+          if (mask) { mask.style.opacity = '0'; setTimeout(() => mask.remove(), 300); }
+          mountImg($('.img-box', it.el), plantPhoto(form.plantId || 3, it.seed), { delay: 120 });
+          if (!form.photoSeeds.includes(it.seed)) form.photoSeeds.push(it.seed);
+          bindThumbClick(it.el);
+          scheduleAI();
+        }
+      }, 90);
+    }, delay + 300);
+  }
+
+  function bindThumbClick(el) {
+    if (el._thumbBound) return;
+    el._thumbBound = true;
+    $('.up-box', el).addEventListener('click', () => {
+      const done = $$('#uploadList .upload-item').filter(x => !$('.up-mask', x) && !$('.img-box.failed', x));
+      if (!done.length) return;
+      showImagePreview(done.map((d, i) => ({ src: plantPhoto(form.plantId || 3, i + 1), caption: '现场照片 · 点击左右切换' })));
+    });
+  }
+
+  $$('#uploadList').forEach(l => l.addEventListener('click', e => {
+    const del = e.target.closest('.up-del');
+    if (del) {
+      const item = del.closest('.upload-item');
+      const idx = [...item.parentElement.children].indexOf(item);
+      if (form.photoSeeds[idx] !== undefined) form.photoSeeds.splice(idx, 1);
+      item.style.opacity = '0';
+      setTimeout(() => item.remove(), 200);
+    }
+  }));
+
+  $('#btnCamera').addEventListener('click', () => uploadPhotos(1));
+  $('#btnAlbum').addEventListener('click', () => uploadPhotos(2 + Math.floor(Math.random() * 3)));
+
+  /* ---------------- AI 识别模拟 ---------------- */
+  let aiTimer = null;
+  function scheduleAI() {
+    clearTimeout(aiTimer);
+    aiTimer = setTimeout(startAI, 700);
+  }
+
+  function startAI() {
+    if (aiRunning || !form.photoSeeds.length) return;
+    aiRunning = true;
+    $('#aiBadge').textContent = '识别中';
+    const target = PLANTS[(form.photoSeeds[0] * 5 + form.photoSeeds.length * 3) % PLANTS.length];
+    const fail = Math.random() < 0.18;
+    $('#aiArea').innerHTML = `
+      <div class="ai-scanning">
+        <div class="ai-scan-box">${imgBoxHTML()}</div>
+        <div style="flex:1">
+          <div class="fz-14 bold" style="color:var(--primary-dark)">AI 识别中…</div>
+          <div class="fz-12 text-2 mt-8">正在分析叶片纹理与花器特征</div>
+        </div>
+      </div>`;
+    mountImg($('#aiArea .img-box'), plantPhoto(target.id, form.photoSeeds[0]), { delay: 150 });
+    setTimeout(() => {
+      aiRunning = false;
+      if (fail) {
+        $('#aiBadge').textContent = '识别失败';
+        $('#aiArea').innerHTML = `
+          <div class="ai-fail"><span style="flex:none;display:flex">${icon('alert')}</span>
+            <div style="flex:1">未能识别该物种，置信度过低。可重试，或手动录入物种名称。</div></div>
+          <div class="flex mt-12" style="gap:10px">
+            <button type="button" class="btn btn-ghost btn-sm" style="flex:1" id="aiRetry">重新识别</button>
+            <button type="button" class="btn btn-primary btn-sm" style="flex:1" id="aiManual">手动录入</button>
+          </div>`;
+        $('#aiRetry').addEventListener('click', () => { form._forceAI = true; startAI(); });
+        $('#aiManual').addEventListener('click', () => showAIResult(null, true));
+        return;
+      }
+      showAIResult(target);
+    }, 1900);
+  }
+
+  function showAIResult(target, manual = false) {
+    $('#aiBadge').textContent = manual ? '手动录入' : '识别完成';
+    form.plantId = target ? target.id : null;
+    form.plantName = target ? target.name : '';
+    form.family = target ? target.family : '';
+    $('#aiArea').innerHTML = `
+      ${target ? `
+      <div class="ai-result">
+        <div class="flex-between">
+          <div>
+            <div class="ai-species" style="color:var(--primary-dark)">识别为：${esc(target.name)}</div>
+            <div class="ai-family">${esc(target.latin)} · ${esc(target.family)} · 置信度 92.6%</div>
+          </div>
+          <span class="tag ${attrClass(target.attr)}">${attrLabel(target.attr)}</span>
+        </div>
+      </div>` : `<div class="ai-fail" style="background:var(--bg-soft);color:var(--text-2)"><span style="flex:none;display:flex">${icon('edit')}</span>已切换为手动录入模式</div>`}
+      <div class="form-group" style="margin:12px 0 0" data-field="plant">
+        <div class="form-label">物种名称（可修改校正）<span class="req">*</span></div>
+        <input class="form-input" id="plantNameInput" value="${esc(form.plantName)}" placeholder="请输入或校正物种名称">
+        <div class="form-error-tip">请填写物种名称</div>
+      </div>`;
+    const input = $('#plantNameInput');
+    input.addEventListener('input', () => form.plantName = input.value.trim());
+  }
+
+  /* ---------------- 定位 ---------------- */
+  $('#btnLocate').addEventListener('click', () => {
+    const btn = $('#btnLocate');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    $('#locError').classList.add('hidden');
+    $('#locLoading').classList.remove('hidden');
+    setTimeout(() => {
+      btn.disabled = false;
+      $('#locLoading').classList.add('hidden');
+      if (Math.random() < 0.18) {
+        $('#locError').classList.remove('hidden');
+        return;
+      }
+      const pt = MAP_POINTS[Math.floor(Math.random() * MAP_POINTS.length)];
+      const region = pt.region, place = pt.place.split('·').pop().trim();
+      const plantNear = getPlant(pt.plantId);
+      if (!form.plantId) { form.plantId = plantNear.id; }
+      fillLocation(`${region}区 · ${place}`, `${(117 + Math.random()).toFixed(4)}°E, ${(39 + Math.random() * 0.3).toFixed(4)}°N`);
+      showToast('定位成功');
+    }, 1100);
+  });
+
+  function fillLocation(place, coords) {
+    form.place = place; form.coords = coords;
+    $('#locPlace').textContent = place;
+    $('#locPlace').style.color = 'var(--text)';
+    $('#locCoord').textContent = coords;
+  }
+
+  /* 地图选点弹窗 */
+  $('#btnPickMap').addEventListener('click', () => {
+    const { close, panel } = showSheet('地图选点', `
+      <div class="fz-12 text-2" style="margin-bottom:10px">在地图上点击任意位置放置图钉，确认后自动填充观测点位。</div>
+      <div class="mini-map" id="pickMap" style="height:300px;cursor:crosshair">
+        <div class="map-canvas" id="pickCanvas"></div>
+      </div>
+      <div class="fz-13 mt-12" style="text-align:center;color:var(--text-2)" id="pickInfo">尚未选点</div>
+      <button type="button" class="btn btn-primary btn-block mt-16" id="pickOk" disabled>确认选点</button>`);
+    const pc = panel.querySelector('#pickCanvas');
+    pc.innerHTML = TJ_MAP_SVG;
+    Object.entries(REGION_POS).forEach(([name, [x, y]]) => {
+      const lb = document.createElement('span');
+      lb.className = 'map-region-label';
+      lb.style.left = x + '%'; lb.style.top = y + '%';
+      lb.textContent = name;
+      pc.appendChild(lb);
+    });
+    let picked = null;
+    panel.querySelector('#pickMap').addEventListener('click', e => {
+      if (e.target.closest('.map-region-label')) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width * 100;
+      const y = (e.clientY - rect.top) / rect.height * 100;
+      pc.querySelectorAll('.map-user-pin').forEach(p => p.remove());
+      const pin = document.createElement('div');
+      pin.className = 'map-user-pin';
+      pin.style.left = x + '%'; pin.style.top = y + '%';
+      pin.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="#46604C"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="3" fill="#fff"/></svg>`;
+      pc.appendChild(pin);
+      /* 最近区域 */
+      let best = null, bd = 1e9;
+      Object.entries(REGION_POS).forEach(([name, [rx, ry]]) => {
+        const d = Math.hypot(rx - x, ry - y);
+        if (d < bd) { bd = d; best = name; }
+      });
+      picked = { x, y, region: best };
+      panel.querySelector('#pickInfo').innerHTML = `已选择：<b style="color:var(--primary-deep)">${best}区</b> 附近 (x:${x.toFixed(1)}%, y:${y.toFixed(1)}%)`;
+      panel.querySelector('#pickOk').disabled = false;
+    });
+    panel.querySelector('#pickOk').addEventListener('click', () => {
+      const streets = ['海河沿岸', '社区口袋公园', '街道转角绿地', '滨河步道', '公园北门'];
+      const s = streets[Math.floor(Math.random() * streets.length)];
+      fillLocation(`${picked.region}区 · ${s}`, `${(116.8 + picked.x / 100 * 0.8).toFixed(4)}°E, ${(38.6 + picked.y / 100 * 0.9).toFixed(4)}°N`);
+      close();
+      showToast('已通过地图选点填充位置');
+    });
+  });
+
+  /* ---------------- 下拉 ---------------- */
+  $('#fsStage').innerHTML = fakeSelectHTML(['发芽', '展叶', '开花', '结果', '落叶', '休眠'], { placeholder: '请选择生长阶段', name: 'stage' });
+  $('#fsHealth').innerHTML = fakeSelectHTML(['健康', '病虫害', '枯萎', '缺水', '人为损伤'], { placeholder: '请选择健康状态（选填）', name: 'health' });
+  initFakeSelects(document, (name, v) => { form[name] = v; });
+
+  /* ---------------- 草稿恢复 ---------------- */
+  const draftId = qs('draft');
+  if (draftId) {
+    const d = DB.getDraft(draftId);
+    if (d) {
+      form.plantName = d.plantName || ''; form.family = d.family || '';
+      form.place = d.place || ''; form.coords = d.coords || '';
+      form.stage = d.stage || ''; form.health = d.health || ''; form.note = d.note || '';
+      form.habitats = d.stage2 ? [d.stage2] : [];
+      showAIResult(getPlant(d.plantId) || null, !d.plantId);
+      if (form.place) fillLocation(form.place, form.coords);
+      $('#fsStage .fake-select').dataset.value = form.stage;
+      $('#fsStage .fs-text').textContent = form.stage || '请选择生长阶段';
+      form.habitats.forEach(h => $(`#habitatTags .check-tag[data-h="${h}"]`)?.classList.add('on'));
+      $('#noteInput').value = form.note;
+      showToast('已恢复草稿内容，可继续编辑');
+    }
+  }
+
+  /* ---------------- 保存草稿 ---------------- */
+  function saveDraft() {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    if (!form.plantName && !form.place && !form.photoSeeds.length) {
+      showErrorModal('空记录无法保存为草稿，\n请至少填写物种名称或上传照片。', '无法保存');
+      return;
+    }
+    const btn = $('#draftBtn');
+    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> 保存中…';
+    setTimeout(() => {
+      const drafts = UD.get('drafts', []);
+      const data = {
+        plantId: form.plantId, plantName: form.plantName, family: form.family,
+        place: form.place, coords: form.coords, stage: fsValue('stage'), health: fsValue('health'),
+        note: $('#noteInput').value, photoSeeds: form.photoSeeds.slice(0, 3),
+        stage2: form.habitats[0] || '', time: _nowFull(),
+      };
+      if (draftId) {
+        const i = drafts.findIndex(x => x.id === draftId);
+        if (i >= 0) drafts[i] = { ...drafts[i], ...data };
+        else drafts.push({ id: draftId, ...data });
+      } else {
+        drafts.push({ id: 'd' + Date.now().toString(36), ...data });
+      }
+      UD.set('drafts', drafts);
+      btn.disabled = false; btn.textContent = '保存草稿';
+      showModal({
+        icon: 'success', title: '草稿已保存',
+        content: '草稿已存入「我的 · 观察日志」草稿箱，\n可随时回来继续编辑。',
+        confirmText: '继续编辑', cancelText: '去看看',
+        onConfirm: () => { },
+        onCancel: () => navigate('my-logs.html', '正在前往我的日志'),
+      });
+    }, 800);
+  }
+  $('#draftBtn').addEventListener('click', saveDraft);
+  $('#hDraft').addEventListener('click', saveDraft);
+
+  /* ---------------- 提交发布 ---------------- */
+  function submit() {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    form.stage = fsValue('stage');
+    form.health = fsValue('health');
+    form.note = $('#noteInput').value;
+    const missing = [];
+    if (!form.plantName) missing.push('物种名称（AI 识别或手动录入）');
+    if (!form.place) missing.push('观测点位（获取定位或地图选点）');
+    if (!form.stage) missing.push('生长阶段');
+    if (missing.length) {
+      $$('#recordForm .form-group').forEach(g => g.classList.remove('error'));
+      if (!form.plantName) $('#recordForm [data-field="plant"]')?.classList.add('error');
+      if (!form.stage) $('#recordForm [data-field="stage"]').classList.add('error');
+      showModal({
+        icon: 'error', title: '还有必填项未完成',
+        content: missing.map(m => '· ' + m).join('\n'),
+        confirmText: '去补充',
+      });
+      return;
+    }
+    const btn = $('#submitBtn');
+    btn.disabled = true; btn.innerHTML = '<div class="spinner" style="border-top-color:#fff"></div> 发布中…';
+    setTimeout(() => {
+      const logId = DB.addLog({
+        plantId: form.plantId, plantName: form.plantName, family: form.family,
+        place: form.place, coords: form.coords || '117.2000°E, 39.1200°N',
+        stage: form.stage, health: form.health || '健康', note: form.note || '（无备注）',
+        habitats: form.habitats, photoSeeds: form.photoSeeds.length ? form.photoSeeds : [1, 2],
+        time: _nowFull(), taskId: qs('task') || null,
+      });
+      if (draftId) DB.removeDraft(draftId);
+      btn.disabled = false; btn.textContent = '提交发布';
+      showModal({
+        icon: 'success', title: '发布成功',
+        content: '你的观察记录已发布！\n感谢为城市植物档案添上一笔。',
+        confirmText: '查看这条日志', cancelText: '再记一条',
+        onConfirm: () => navigate(`log-detail.html?id=${logId}`, '正在查看日志'),
+        onCancel: () => location.reload(),
+      });
+    }, 1300);
+  }
+  $('#submitBtn').addEventListener('click', submit);
+  $('#hSubmit').addEventListener('click', submit);
+
+  /* ---------------- 进入页面：骨架屏 → 表单 ---------------- */
+  setTimeout(() => {
+    $('#formSkeleton').classList.add('hidden');
+    $('#recordForm').classList.remove('hidden');
+    initCollapsibles();
+  }, 650);
+</script>
+</body>
+</html>
+
+

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>我的观察日志 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">我的观察日志</div>
+    <div class="spacer"></div>
+    <button class="h-btn strong" data-nav="record.html" data-nav-text="去记录一株">记一笔</button>
+  </div>
+</header>
+
+<div class="page">
+  <!-- 筛选 -->
+  <div class="flex mt-12" style="gap:10px" id="filterRow">
+    <div style="flex:1" id="fsTime"></div>
+    <div style="flex:1" id="fsRegion"></div>
+  </div>
+
+  <!-- 草稿区 -->
+  <div id="draftZone"></div>
+
+  <!-- 日志列表 -->
+  <div id="logList"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('mine');
+
+  if (!Auth.current()) {
+    document.addEventListener('DOMContentLoaded', () => navigate('auth.html', '请先登录'));
+  } else {
+    init();
+  }
+
+  function init() {
+    $('#fsTime').innerHTML = fakeSelectHTML(['全部时间', '最近一周', '最近一月'], { placeholder: '全部时间', name: 'time', value: '全部时间' });
+    $('#fsRegion').innerHTML = fakeSelectHTML(['全部区域', ...REGIONS], { placeholder: '全部区域', name: 'region', value: '全部区域' });
+    initFakeSelects(document, () => renderWithLoading());
+    renderWithLoading();
+  }
+
+  function applyFilters(logs) {
+    const time = fsValue('time'), region = fsValue('region');
+    return logs.filter(l => {
+      if (region && region !== '全部区域') {
+        if (!(l.place || '').includes(region)) return false;
+      }
+      if (time && time !== '全部时间') {
+        const days = time === '最近一周' ? 7 : 30;
+        const d = new Date(l.time.replace(/-/g, '/')).getTime();
+        if (Date.now() - d > days * 864e5) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderWithLoading() {
+    $('#logList').innerHTML = Array(3).fill(0).map(() => `
+      <div class="log-item">
+        <div class="skeleton" style="width:86px;height:86px;border-radius:11px"></div>
+        <div style="flex:1">
+          <div class="skeleton sk-text" style="width:56%;height:15px"></div>
+          <div class="skeleton sk-text mt-8" style="width:80%;height:11px"></div>
+          <div class="skeleton sk-text mt-8" style="width:36%;height:10px"></div>
+        </div>
+      </div>`).join('');
+    setTimeout(render, 600);
+  }
+
+  function render() {
+    /* 草稿区 */
+    const drafts = UD.get('drafts', []);
+    $('#draftZone').innerHTML = drafts.length ? `
+      <div class="section-title"><span class="st-bar" style="background:var(--exotic)"></span>草稿箱<span class="st-more">${drafts.length} 份</span></div>
+      ${drafts.map(d => `
+        <div class="log-item" style="border:1.5px dashed var(--primary-line)">
+          <div class="li-img" style="background:var(--bg-soft);display:flex;align-items:center;justify-content:center;color:var(--text-3)">${icon('edit')}</div>
+          <div class="li-body">
+            <div class="li-name">${esc(d.plantName || (getPlant(d.plantId) || {}).name || '未命名草稿')} <span class="tag warn">草稿</span></div>
+            <div class="li-place">${esc(d.place || '未定位')}</div>
+            <div class="li-foot">
+              <span>${esc(d.time)}</span>
+              <span style="display:flex;gap:12px">
+                <b style="color:var(--primary-deep)" data-edit="${d.id}">继续编辑</b>
+                <b style="color:var(--invasive)" data-del="${d.id}">删除</b>
+              </span>
+            </div>
+          </div>
+        </div>`).join('')}` : '';
+
+    $$('#draftZone [data-edit]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      navigate(`record.html?draft=${b.dataset.edit}`, '正在打开草稿');
+    }));
+    $$('#draftZone [data-del]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      showModal({
+        icon: 'error', title: '删除草稿', content: '删除后不可恢复，确定删除这份草稿吗？',
+        confirmText: '删除', cancelText: '取消',
+        onConfirm: () => { DB.removeDraft(b.dataset.del); showToast('草稿已删除'); render(); },
+      });
+    }));
+
+    /* 日志列表 */
+    const logs = applyFilters(DB.myLogs());
+    if (!logs.length) {
+      $('#logList').innerHTML = `<div class="card card-pad mt-8">
+        ${emptyStateHTML({
+          title: '还没有观察记录',
+          desc: '从身边的一草一木开始，\n拍张照、认认它、记下来。',
+          btnText: '去记录一株植物', btnUrl: 'record.html', btnIcon: 'camera',
+        })}</div>`;
+      $('#logList .btn').addEventListener('click', () => navigate('record.html', '去记录一株'));
+      return;
+    }
+    $('#logList').innerHTML = `
+      <div class="section-title"><span class="st-bar"></span>已发布<span class="st-more">${logs.length} 条</span></div>
+      ${logs.map(l => `
+        <div class="log-item" data-id="${l.id}">
+          <div class="li-img">${imgBoxHTML()}</div>
+          <div class="li-body">
+            <div class="li-name">${esc(l.plantName || (getPlant(l.plantId) || {}).name || '未命名物种')}</div>
+            <div class="li-place">${esc(l.place || '未定位')}</div>
+            <div class="li-foot"><span>${esc(l.time)}</span><span class="tag ${l.health === '健康' ? 'native' : 'exotic'}">${esc(l.health)}</span></div>
+          </div>
+        </div>`).join('')}`;
+    $$('#logList .log-item').forEach(el => {
+      const l = logs.find(x => x.id === el.dataset.id);
+      mountImg($('.img-box', el), plantPhoto(l.plantId || 3, 1), { delay: 200 });
+      el.addEventListener('click', () => navigate(`log-detail.html?id=${l.id}`, '正在查看日志'));
+    });
+  }
+
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+</script>
+</body>
+</html>
+
+
+

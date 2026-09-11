@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>科普社区 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">科普社区</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="chips-fade chips-fade-bg mt-12"><div class="chips-scroll" id="tabChips"></div></div>
+  <div id="artList" class="mt-16"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('atlas');
+
+  let tab = 'native';
+
+  $('#tabChips').innerHTML = COMMUNITY_TABS.map(t =>
+    `<button class="chip ${t.key === tab ? 'active' : ''}" data-v="${t.key}">${t.label}</button>`).join('');
+
+  function cardHTML(a) {
+    const isMoment = a.kind === 'moment';
+    return `<div class="article-card" data-id="${a.id}">
+      <div class="ac-cover">${imgBoxHTML()}</div>
+      <div class="ac-body">
+        <div class="ac-title">${isMoment ? `<span class="tag soft" style="margin-right:6px;vertical-align:2px">动态</span>` : ''}${esc(a.title)}</div>
+        <div class="ac-desc">${esc(a.desc)}</div>
+        <div class="ac-foot">
+          <span class="af">${esc(a.author)}</span>
+          <span class="af">${icon('clock')} ${esc(a.time)}</span>
+          <span class="af">${icon('heart')} ${a.likes}</span>
+          <span class="af">${icon('comment')} ${a.comments}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderList() {
+    const list = ARTICLES.filter(a => a.tab === tab);
+    if (!list.length) {
+      $('#artList').innerHTML = `<div class="card card-pad" style="margin-top:4px">
+        ${emptyStateHTML({
+          title: '该分类内容筹备中',
+          desc: '「四季植物专题」正在组稿，\n先去其他分类逛逛吧。',
+          btnIcon: 'book',
+        })}</div>`;
+      return;
+    }
+    $('#artList').innerHTML = list.map(cardHTML).join('');
+    $$('#artList .article-card').forEach(card => {
+      const a = ARTICLES.find(x => x.id === card.dataset.id);
+      mountImg($('.ac-cover .img-box', card), plantCover(a.cover), { delay: 280 });
+      card.addEventListener('click', () => navigate(`article-detail.html?id=${a.id}`, '正在阅读文章'));
+    });
+  }
+
+  function renderWithLoading() {
+    $('#artList').innerHTML = Array(2).fill(0).map(() => `
+      <div class="task-sk" style="border-radius:var(--radius)">
+        <div class="skeleton" style="height:150px;border-radius:0"></div>
+        <div style="padding:14px 16px 16px">
+          <div class="skeleton sk-text" style="width:72%;height:16px"></div>
+          <div class="skeleton sk-text mt-8" style="width:92%;height:11px"></div>
+          <div class="skeleton sk-text mt-8" style="width:40%;height:11px"></div>
+        </div></div>`).join('');
+    setTimeout(renderList, 600);
+  }
+
+  $('#tabChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.dataset.v === tab) return;
+    $$('#tabChips .chip').forEach(c => c.classList.toggle('active', c === chip));
+    tab = chip.dataset.v;
+    renderWithLoading();
+  });
+
+  renderWithLoading();
+  $('#backBtn').addEventListener('click', () => goBack('index.html'));
+</script>
+</body>
+</html>
+
+

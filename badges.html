@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>成就勋章 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">成就勋章</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="card card-pad mt-12 flex" style="gap:12px">
+    <span style="color:var(--exotic);display:flex">${icon('medal')}</span>
+    <div style="flex:1">
+      <div class="fz-14 bold">已解锁 <span id="unlockedCount" style="color:var(--exotic)">0</span> / 8 枚</div>
+      <div class="fz-12 text-2 mt-8">持续观察、打卡点位、参与任务，即可解锁更多勋章</div>
+    </div>
+  </div>
+  <div class="badge-grid mt-16" id="badgeGrid"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('mine');
+
+  /* 渲染骨架 */
+  $('#badgeGrid').innerHTML = BADGES.map(() => `
+    <div class="badge-cell">
+      <div class="skeleton sk-circle" style="width:56px;height:56px;margin:0 auto 9px"></div>
+      <div class="skeleton sk-text" style="width:48px;height:12px;margin:0 auto"></div>
+    </div>`).join('');
+  document.querySelector('.card .fz-14').innerHTML = `已解锁 <span id="unlockedCount" style="color:var(--exotic)">0</span> / ${BADGES.length} 枚`;
+
+  setTimeout(() => {
+    const unlocked = BADGES.filter(b => b.unlocked).length;
+    $('#unlockedCount').textContent = unlocked;
+    $('#badgeGrid').innerHTML = BADGES.map(b => `
+      <div class="badge-cell ${b.unlocked ? '' : 'locked'}" data-id="${b.id}">
+        <div class="bd-medal">${icon(b.icon === 'water' ? 'map' : b.icon)}</div>
+        <div class="bd-name">${esc(b.name)}</div>
+        <div class="bd-sub">${b.unlocked ? '已解锁' : '未解锁'}</div>
+      </div>`).join('');
+
+    $$('#badgeGrid .badge-cell').forEach(cell => {
+      const b = BADGES.find(x => x.id === cell.dataset.id);
+      cell.addEventListener('click', () => {
+        showModal({
+          icon: b.unlocked ? 'success' : 'none',
+          title: `${b.name} ${b.unlocked ? '' : '（未解锁）'}`,
+          html: `
+            <div style="display:flex;justify-content:center;margin:4px 0 14px">
+              <div style="width:64px;height:64px;border-radius:50%;background:${b.unlocked ? 'linear-gradient(145deg,#EDF3EC,#D5E4D6)' : '#EFF2EF'};color:${b.unlocked ? 'var(--primary-deep)' : 'var(--text-3)'};display:flex;align-items:center;justify-content:center">${icon(b.icon === 'water' ? 'map' : b.icon).replace('26" height="26', '30" height="30')}</div>
+            </div>
+            <div style="font-size:13px;color:var(--text-2)">${esc(b.desc)}</div>
+            ${b.unlocked ? `<div class="fz-12 mt-12" style="color:var(--exotic)">解锁于 ${esc(b.date)}</div>` : `<div class="fz-12 mt-12" style="color:var(--text-3)">达成条件后自动解锁</div>`}`,
+          confirmText: b.unlocked ? '很棒' : '继续加油',
+        });
+      });
+    });
+  }, 700);
+
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+</script>
+</body>
+</html>
+
+

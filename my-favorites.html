@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>我的收藏 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="header sub-header">
+  <div class="header-inner">
+    <button class="back-btn" id="backBtn"></button>
+    <div class="page-title">我的收藏</div>
+    <div class="spacer"></div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="chips-fade chips-fade-bg mt-12">
+    <div class="chips-scroll" id="favTabs">
+      <button class="chip active" data-v="plant">收藏物种</button>
+      <button class="chip" data-v="article">收藏科普文章</button>
+    </div>
+  </div>
+  <div id="favList" class="mt-16"></div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  $('#backBtn').innerHTML = icon('chevronLeft');
+  renderTabbar('mine');
+
+  let tab = 'plant';
+
+  function renderWithLoading() {
+    $('#favList').innerHTML = Array(3).fill(0).map(() => `
+      <div class="log-item">
+        <div class="skeleton" style="width:62px;height:62px;border-radius:11px"></div>
+        <div style="flex:1">
+          <div class="skeleton sk-text" style="width:52%;height:15px"></div>
+          <div class="skeleton sk-text mt-8" style="width:70%;height:11px"></div>
+        </div>
+      </div>`).join('');
+    setTimeout(render, 550);
+  }
+
+  function render() {
+    if (!Auth.current()) {
+      $('#favList').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+        title: '登录后查看收藏', desc: '收藏的物种与科普文章\n将保存在你的账号空间中。', btnIcon: 'star', small: true,
+      })}</div>`;
+      return;
+    }
+    if (tab === 'plant') {
+      const favs = UD.get('favs', []);
+      if (!favs.length) {
+        $('#favList').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+          title: '还没有收藏物种', desc: '在植物详情页点击右上角心形，\n即可收藏喜欢的植物。', btnText: '去逛图鉴', btnUrl: 'index.html', btnIcon: 'heart',
+        })}</div>`;
+        return;
+      }
+      $('#favList').innerHTML = favs.map(pid => {
+        const p = getPlant(pid);
+        if (!p) return '';
+        return `<div class="fav-plant-item" data-pid="${p.id}">
+          <div class="fp-img">${imgBoxHTML()}</div>
+          <div style="flex:1;min-width:0">
+            <div class="fz-14 bold">${esc(p.name)}</div>
+            <div class="fz-12 text-2" style="font-style:italic">${esc(p.latin)}</div>
+            <div class="mt-8"><span class="tag ${attrClass(p.attr)}">${attrLabel(p.attr)}</span> <span class="tag type">${p.type}</span></div>
+          </div>
+          <span style="color:var(--text-3);display:flex">${icon('chevronRight')}</span>
+        </div>`;
+      }).join('');
+      $$('#favList .fav-plant-item').forEach(el => {
+        mountImg($('.img-box', el), plantCover(+el.dataset.pid), { delay: 220 });
+        el.addEventListener('click', () => navigate(`plant-detail.html?id=${el.dataset.pid}`, '正在查看物种'));
+      });
+    } else {
+      const favArts = UD.get('favArts', []);
+      if (!favArts.length) {
+        $('#favList').innerHTML = `<div class="card card-pad">${emptyStateHTML({
+          title: '还没有收藏文章', desc: '在科普文章页点击收藏按钮，\n方便随时回看。', btnText: '去逛科普社区', btnUrl: 'community.html', btnIcon: 'book',
+        })}</div>`;
+        return;
+      }
+      $('#favList').innerHTML = favArts.map(aid => {
+        const a = getArticle(aid);
+        if (!a) return '';
+        return `<div class="article-card" data-id="${a.id}">
+          <div class="ac-cover">${imgBoxHTML()}</div>
+          <div class="ac-body">
+            <div class="ac-title">${esc(a.title)}</div>
+            <div class="ac-desc">${esc(a.desc)}</div>
+            <div class="ac-foot"><span class="af">${esc(a.author)}</span><span class="af">${icon('clock')} ${esc(a.time)}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      $$('#favList .article-card').forEach(el => {
+        const a = getArticle(el.dataset.id);
+        mountImg($('.ac-cover .img-box', el), plantCover(a.cover), { delay: 240 });
+        el.addEventListener('click', () => navigate(`article-detail.html?id=${a.id}`, '正在阅读文章'));
+      });
+    }
+  }
+
+  $('#favTabs').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.dataset.v === tab) return;
+    $$('#favTabs .chip').forEach(c => c.classList.toggle('active', c === chip));
+    tab = chip.dataset.v;
+    renderWithLoading();
+  });
+
+  renderWithLoading();
+  $('#backBtn').addEventListener('click', () => goBack('profile.html'));
+</script>
+</body>
+</html>
+
+

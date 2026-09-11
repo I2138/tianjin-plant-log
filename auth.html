@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>登录 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<div class="auth-page page no-nav">
+  <div class="auth-logo">
+    <div class="al-ring" id="authLogo"></div>
+    <div class="al-name">津城植物日志</div>
+    <div class="al-slogan">记录身边草木 · 共建城市自然档案</div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="on" data-tab="login">登 录</button>
+      <button data-tab="register">注 册</button>
+    </div>
+
+    <!-- 演示账号提示（仅登录态展示） -->
+    <div class="demo-tip" id="demoTip">
+      <span style="flex:none;display:flex;color:#6E8A9C"></span>
+      <span>演示账号 <b>demo</b> / 密码 <b>123456</b>，含预置数据</span>
+      <button class="dt-fill" id="fillDemo">一键填充</button>
+    </div>
+
+    <!-- 登录表单 -->
+    <form id="loginForm" novalidate>
+      <div class="form-group" data-field="name">
+        <div class="form-label">昵称</div>
+        <input class="form-input" id="liName" placeholder="请输入昵称" autocomplete="username">
+        <div class="form-error-tip">请输入昵称</div>
+      </div>
+      <div class="form-group" data-field="pwd">
+        <div class="form-label">密码</div>
+        <input class="form-input" id="liPwd" type="password" placeholder="请输入密码" autocomplete="current-password">
+        <div class="form-error-tip">请输入密码</div>
+      </div>
+      <button class="btn btn-primary btn-block mt-8" id="loginBtn" type="submit">登 录</button>
+    </form>
+
+    <!-- 注册表单 -->
+    <form id="regForm" class="hidden" novalidate>
+      <div class="form-group" data-field="name">
+        <div class="form-label">昵称<span class="req">*</span></div>
+        <input class="form-input" id="rgName" placeholder="2-12 个字符，注册后不可修改">
+        <div class="form-error-tip">昵称需 2-12 个字符</div>
+      </div>
+      <div class="form-group" data-field="pwd">
+        <div class="form-label">密码<span class="req">*</span></div>
+        <input class="form-input" id="rgPwd" type="password" placeholder="至少 6 位">
+        <div class="form-error-tip">密码至少 6 位</div>
+      </div>
+      <div class="form-group" data-field="pwd2">
+        <div class="form-label">确认密码<span class="req">*</span></div>
+        <input class="form-input" id="rgPwd2" type="password" placeholder="请再次输入密码">
+        <div class="form-error-tip">两次输入的密码不一致</div>
+      </div>
+      <div class="form-hint">注册即代表同意《社区公约》：爱护草木，只拍照不采摘。账号数据仅保存在本机浏览器中。</div>
+      <button class="btn btn-primary btn-block mt-12" id="regBtn" type="submit">注册并登录</button>
+    </form>
+  </div>
+
+  <div class="auth-foot">
+    <div class="af-guest">先随便逛逛？<b id="guestBtn">游客浏览</b></div>
+  </div>
+</div>
+
+<script src="js/photos.js"></script>
+<script src="js/images.js"></script>
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/common.js"></script>
+<script>
+  /* logo */
+  $('#authLogo').innerHTML = icon('sprout').replace('width="22" height="22"', 'width="40" height="40"');
+  $('#demoTip').querySelector('span').innerHTML = icon('eye');
+
+  /* tab 切换 */
+  $$('.auth-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.auth-tabs button').forEach(b => b.classList.toggle('on', b === btn));
+      const isLogin = btn.dataset.tab === 'login';
+      $('#loginForm').classList.toggle('hidden', !isLogin);
+      $('#regForm').classList.toggle('hidden', isLogin);
+      $('#demoTip').classList.toggle('hidden', !isLogin);
+    });
+  });
+
+  $('#fillDemo').addEventListener('click', () => {
+    $('#liName').value = 'demo';
+    $('#liPwd').value = '123456';
+    showToast('已填入演示账号');
+  });
+
+  /* 游客浏览 */
+  $('#guestBtn').addEventListener('click', () => navigate('index.html', '正在进入图鉴'));
+
+  function fieldError(form, field, on) {
+    const g = form.querySelector(`[data-field="${field}"]`);
+    if (g) g.classList.toggle('error', on);
+  }
+
+  /* 登录 */
+  $('#loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#liName').value.trim(), pwd = $('#liPwd').value;
+    let ok = true;
+    if (!name) { fieldError(e.target, 'name', true); ok = false; } else fieldError(e.target, 'name', false);
+    if (!pwd) { fieldError(e.target, 'pwd', true); ok = false; } else fieldError(e.target, 'pwd', false);
+    if (!ok) { e.target.classList.add('shake'); setTimeout(() => e.target.classList.remove('shake'), 450); return; }
+
+    const btn = $('#loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="border-top-color:#fff"></div> 登录中…';
+    setTimeout(() => {
+      const r = Auth.login(name, pwd);
+      btn.disabled = false;
+      btn.textContent = '登 录';
+      if (!r.ok) {
+        showErrorModal(r.msg, '登录失败');
+        $('#liPwd').value = '';
+        return;
+      }
+      showToast(`欢迎回来，${r.user.name}`);
+      setTimeout(() => navigate('index.html', '正在进入图鉴'), 500);
+    }, 900);
+  });
+
+  /* 注册 */
+  $('#regForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#rgName').value.trim(), pwd = $('#rgPwd').value, pwd2 = $('#rgPwd2').value;
+    let ok = true;
+    if (name.length < 2 || name.length > 12) { fieldError(e.target, 'name', true); ok = false; } else fieldError(e.target, 'name', false);
+    if (pwd.length < 6) { fieldError(e.target, 'pwd', true); ok = false; } else fieldError(e.target, 'pwd', false);
+    if (pwd2 !== pwd || !pwd2) { fieldError(e.target, 'pwd2', true); ok = false; } else fieldError(e.target, 'pwd2', false);
+    if (!ok) { e.target.classList.add('shake'); setTimeout(() => e.target.classList.remove('shake'), 450); return; }
+
+    const btn = $('#regBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="border-top-color:#fff"></div> 注册中…';
+    setTimeout(() => {
+      const r = Auth.register(name, pwd);
+      btn.disabled = false;
+      btn.textContent = '注册并登录';
+      if (!r.ok) { showErrorModal(r.msg, '注册失败'); return; }
+      showModal({
+        icon: 'success', title: '注册成功',
+        content: `欢迎加入，${r.user.name}！\n你的专属数据空间已创建：\n观察日志 / 草稿 / 收藏 / 上报互不干扰。`,
+        confirmText: '开始逛逛',
+        onConfirm: () => navigate('index.html', '正在进入图鉴'),
+      });
+    }, 900);
+  });
+</script>
+</body>
+</html>
+
+
