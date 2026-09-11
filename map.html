@@ -221,9 +221,9 @@
     showDrawer({
       title: '点位筛选',
       groups: [
-        { key: 'type', label: '植物类型', options: ['全部', ...PLANT_TYPES.map(t => ({ v: t, label: t }))], selected: [filter.type || '全部'] },
-        { key: 'attr', label: '物种属性', options: [{ v: 'native', label: '本土物种' }, { v: 'exotic', label: '外来物种' }, { v: 'invasive', label: '入侵物种' }], selected: filter.attr ? [filter.attr] : [] },
-        { key: 'region', label: '天津行政区', options: REGIONS, selected: filter.region ? [filter.region] : [] },
+        { key: 'type', label: '植物类型', single: true, options: ['全部', ...PLANT_TYPES.map(t => ({ v: t, label: t }))], selected: [filter.type || '全部'] },
+        { key: 'attr', label: '物种属性', single: true, options: [{ v: 'native', label: '本土物种' }, { v: 'exotic', label: '外来物种' }, { v: 'invasive', label: '入侵物种' }], selected: filter.attr ? [filter.attr] : [] },
+        { key: 'region', label: '天津行政区', single: true, options: REGIONS, selected: filter.region ? [filter.region] : [] },
       ],
       onConfirm(state) {
         filter.type = state.type[0] === '全部' ? '' : (state.type[0] || '');
