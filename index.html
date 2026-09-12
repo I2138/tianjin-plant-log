@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>津城植物日志 · 城市植物共建观察平台</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/pages.css?v=2">
 </head>
 <body>
 
@@ -84,11 +84,11 @@
   <div id="listFooter"></div>
 </div>
 
-<script src="js/photos.js"></script>
-<script src="js/images.js"></script>
-<script src="js/data.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/common.js"></script>
+<script src="js/photos.js?v=2"></script>
+<script src="js/images.js?v=2"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/storage.js?v=2"></script>
+<script src="js/common.js?v=2"></script>
 <script>
   /* 图标注入 */
   $('#brandIcon').innerHTML = icon('sprout');
@@ -102,9 +102,8 @@
 
   /* ---------------- 状态 ---------------- */
   const state = { type: '', attr: '', season: '', region: '', kw: '' };
-  /* 首页隐藏前 6 个物种（国槐/垂柳/白蜡/西府海棠/月季/金叶女贞，用户端显示为占位，要求移除） */
-  const HOME_HIDDEN_IDS = [1, 2, 3, 4, 5, 6];
-  const HOME_LIST = PLANTS.filter(p => !HOME_HIDDEN_IDS.includes(p.id));
+  /* 首页展示全部物种（已扩充到 60 种） */
+  const HOME_LIST = PLANTS;
   let shown = 0;          // 无限滚动已显示数
   const PAGE_SIZE = 12;
   let filtered = [];

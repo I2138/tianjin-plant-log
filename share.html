@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>分享广场 · 津城植物日志</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=3">
+  <style>.sheet-panel{z-index:310!important}</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="page-title">分享广场</div>
+    <div class="spacer"></div>
+    <button class="h-btn strong" id="newPostBtn"></button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="feed-banner">
+    <div class="fb-main">
+      <div class="fb-title">发现 · 分享 · 共建</div>
+      <div class="fb-desc">大家在哪里发现了什么植物，有什么感想，都在这里。</div>
+    </div>
+  </div>
+  <div id="feedList" class="mt-16"></div>
+  <div id="feedFooter"></div>
+</div>
+
+<script src="js/photos.js?v=3"></script>
+<script src="js/images.js?v=3"></script>
+<script src="js/data.js?v=3"></script>
+<script src="js/storage.js?v=3"></script>
+<script src="js/common.js?v=3"></script>
+<script>
+  $('#newPostBtn').innerHTML = icon('plus') + ' 发动态';
+  renderTabbar('share');
+
+  /* ---------------- 内置动态（示例） ---------------- */
+  const SEED_FEED = [
+    { id: 'sf1', author: '海河漫步', time: '2 小时前', plantId: 1, place: '和平区 · 五大道睦南道', text: '睦南道这棵百年国槐今天拍到了满树新叶，透光看特别漂亮。城市里的古树就是会呼吸的历史。', likes: 26, comments: 4, imgs: ['p1_0.jpg'] },
+    { id: 'sf2', author: '津门花匠', time: '昨天 18:20', plantId: 22, place: '红桥区 · 北运河桃花堤', text: '桃花堤的碧桃盛开了！粉色的云压满枝头，路过的人都忍不住拍照。春日限定美景，值得专门跑一趟。', likes: 88, comments: 12, imgs: ['p22_0.jpg', 'p22_1.jpg'] },
+    { id: 'sf3', author: '柳絮飞时', time: '昨天 09:15', plantId: 29, place: '蓟州区 · 盘山磨盘柿沟', text: '盘山脚下的柿子林开始挂果了，磨盘柿个头真的大，像小灯笼一样。秋天来蓟州一定要尝一口霜柿。', likes: 45, comments: 7, imgs: ['p29_0.jpg'] },
+    { id: 'sf4', author: '五大道扫街', time: '3 天前', plantId: 17, place: '南开区 · 水上公园银杏道', text: '水上公园的银杏道已经开始变色，黄绿相间的过渡期其实比全黄更有层次感，推荐下周来打卡。', likes: 67, comments: 9, imgs: ['p17_0.jpg'] },
+    { id: 'sf5', author: '北宁晨练者', time: '4 天前', plantId: 43, place: '河北区 · 北宁公园', text: '北宁公园的樱花今年开了，虽然还不是盛花期，粉白色的花苞已经挂满枝头，晨练遛弯的好地方。', likes: 33, comments: 5, imgs: ['p43_0.jpg'] },
+    { id: 'sf6', author: '湿地观察员', time: '5 天前', plantId: 57, place: '宁河区 · 七里海湿地', text: '七里海的香蒲已经抽出腊肠花序，水鸟在芦苇丛里做窝。湿地生态修复效果肉眼可见，芦苇荡又回来了。', likes: 52, comments: 6, imgs: ['p57_0.jpg'] },
+  ];
+
+  /* ---------------- 数据读写（localStorage 真实存储） ---------------- */
+  function allPosts() { return [...UD.get('posts', []), ...SEED_FEED]; }
+  function savePost(p) { const l = UD.get('posts', []); l.unshift(p); UD.set('posts', l); }
+  function isLiked(id) { return !!UD.get('postLikes', {})[id]; }
+  function toggleLike(id) { const l = UD.get('postLikes', {}); l[id] = l[id] ? 0 : 1; UD.set('postLikes', l); }
+  function myComments(id) { return UD.get('postComments', {})[id] || []; }
+  function addComment(id, txt) {
+    const s = UD.get('postComments', {});
+    s[id] = [{ name: Auth.current().name, time: '刚刚', text: txt }, ...(s[id] || [])];
+    UD.set('postComments', s);
+  }
+
+  /* ---------------- 渲染动态流 ---------------- */
+  function renderFeed() {
+    const posts = allPosts();
+    const list = $('#feedList');
+    if (!posts.length) {
+      list.innerHTML = `<div class="card card-pad">${emptyStateHTML({ title: '还没有人分享', desc: '成为第一个分享发现的人吧', small: true })}</div>`;
+      $('#feedFooter').innerHTML = '';
+      return;
+    }
+    list.innerHTML = posts.map(p => {
+      const plant = getPlant(p.plantId);
+      const pname = plant ? plant.name : '未知植物';
+      const plat = plant ? plant.latin : '';
+      const liked = isLiked(p.id);
+      const cmts = myComments(p.id);
+      const cmtCount = (p.comments || 0) + cmts.length;
+      const photos = (p.imgs || []).map((_, k) => `<div class="fp-img"><div class="img-box" style="width:100%;height:100%"><img alt=""></div></div>`).join('');
+      return `
+      <div class="feed-card" data-id="${p.id}">
+        <div class="fp-head">
+          <div class="fp-avatar">${avatar(p.author || '友', 38)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="fp-name">${esc(p.author || '植物爱好者')}</div>
+            <div class="fp-meta">${esc(p.time)} · ${esc(p.place)}</div>
+          </div>
+        </div>
+        <div class="fp-text">${esc(p.text)}</div>
+        ${photos ? `<div class="fp-imgs">${photos}</div>` : ''}
+        <div class="fp-plant">发现植物：<b>${esc(pname)}</b> <span class="fz-12 text-3">${esc(plat)}</span></div>
+        <div class="fp-actions">
+          <button class="fp-act ${liked ? 'on' : ''}" data-act="like">${liked ? icon('heartFill') : icon('heart')} ${(p.likes || 0) + (liked ? 1 : 0)}</button>
+          <button class="fp-act" data-act="cmt">${icon('comment')} ${cmtCount}</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    /* 图片加载 */
+    list.querySelectorAll('.feed-card').forEach((card, i) => {
+      const p = posts[i];
+      if (!p || !p.imgs || !p.imgs.length || !p.plantId) return;
+      const plant = getPlant(p.plantId);
+      card.querySelectorAll('.fp-img .img-box').forEach((box, k) => {
+        mountImg(box, plantPhoto(plant.id, k), { delay: 250 + k * 120 });
+      });
+    });
+
+    /* 点赞/评论 */
+    list.querySelectorAll('[data-act]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.closest('.feed-card').dataset.id;
+        if (btn.dataset.act === 'like') {
+          if (!Auth.current()) { requireLoginToast(); return; }
+          toggleLike(id);
+          renderFeed();
+        } else {
+          openComments(id);
+        }
+      });
+    });
+  }
+
+  /* ---------------- 评论面板 ---------------- */
+  function openComments(postId) {
+    const post = allPosts().find(p => p.id === postId);
+    if (!post) return;
+    const cmts = myComments(postId);
+    const all = [...cmts, ...(post.comments > 0 ? [{ name: '津门观察员', time: '2 天前', text: '感谢分享，下次路过也去看看！' }] : [])];
+    const { close, panel } = showSheet(`评论 · ${(post.comments || 0) + cmts.length} 条`, `
+      <div id="cmtList">${all.map(c => `
+        <div class="comment-item">
+          <div class="cm-avatar"><img src="${avatar(c.name, 34)}" alt=""></div>
+          <div class="cm-body">
+            <div class="cm-name">${esc(c.name)}</div>
+            <div class="cm-text">${esc(c.text)}</div>
+            <div class="cm-time">${esc(c.time)}</div>
+          </div>
+        </div>`).join('')}</div>
+      <div class="flex mt-16" style="gap:10px">
+        <input class="form-input" id="cmtInput" placeholder="友善发言，分享你的看法…" style="flex:1">
+        <button class="btn btn-primary btn-sm" id="cmtSend" style="flex:none">${icon('send')} 发布</button>
+      </div>`);
+    panel.querySelector('#cmtSend').addEventListener('click', () => {
+      if (!Auth.current()) { close(); requireLoginToast(); return; }
+      const txt = panel.querySelector('#cmtInput').value.trim();
+      if (!txt) { showToast('评论内容不能为空'); return; }
+      addComment(postId, txt);
+      close(); showToast('评论发布成功');
+      renderFeed();
+    });
+  }
+
+  /* ---------------- 发布动态 ---------------- */
+  $('#newPostBtn').addEventListener('click', () => {
+    if (!Auth.current()) { requireLoginToast(); return; }
+    let pickedPlant = '';
+    let picked = [];
+    const { close, panel } = showSheet('发布发现分享', `
+      <div class="form-label">你在哪里发现的？</div>
+      <input class="form-input" id="pPlace" placeholder="例如：海河 · 金埠桥段" maxlength="40">
+      <div class="form-label mt-16">是什么植物？</div>
+      <div class="dg-chips" id="pPlantWrap" style="display:flex;flex-wrap:wrap;gap:8px;max-height:170px;overflow-y:auto">
+        ${PLANTS.map(p => `<button class="chip" data-id="${p.id}">${esc(p.name)}</button>`).join('')}
+      </div>
+      <div class="form-label mt-16">有什么感想？</div>
+      <textarea class="form-input" id="pText" rows="3" maxlength="300" placeholder="分享你的发现和感受…"></textarea>
+      <div class="form-label mt-16">照片（选填，最多 3 张）</div>
+      <div class="fp-uploader" id="pPhotos">
+        <button type="button" class="btn btn-soft btn-sm" id="pAddPhoto">${icon('image')} 添加照片</button>
+        <span class="fz-12 text-3" style="margin-left:6px">可从相册选择或拍照</span>
+      </div>
+      <div class="sheet-btns" style="margin-top:18px">
+        <button class="btn btn-ghost" id="pCancel">取消</button>
+        <button class="btn btn-primary" id="pSubmit">发布</button>
+      </div>`);
+    panel.querySelectorAll('#pPlantWrap .chip').forEach(c => {
+      c.addEventListener('click', () => {
+        panel.querySelectorAll('#pPlantWrap .chip').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        pickedPlant = c.dataset.id;
+      });
+    });
+    panel.querySelector('#pAddPhoto').addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/*';
+      inp.multiple = true;
+      inp.onchange = () => {
+        Array.from(inp.files).slice(0, 3 - picked.length).forEach(f => {
+          const r = new FileReader();
+          r.onload = () => { if (picked.length >= 3) return; picked.push(r.result); renderThumbs(); };
+          r.readAsDataURL(f);
+        });
+      };
+      inp.click();
+    });
+    function renderThumbs() {
+      const host = $('#pPhotos');
+      host.querySelectorAll('.fp-picked').forEach(el => el.remove());
+      picked.forEach((src, i) => {
+        const el = document.createElement('div');
+        el.className = 'fp-picked';
+        el.innerHTML = `<img src="${src}" alt=""><button class="fp-del" type="button" data-i="${i}">×</button>`;
+        host.appendChild(el);
+        el.querySelector('button').addEventListener('click', () => { picked.splice(i, 1); renderThumbs(); });
+      });
+    }
+    panel.querySelector('#pCancel').addEventListener('click', close);
+    panel.querySelector('#pSubmit').addEventListener('click', () => {
+      const place = $('#pPlace').value.trim();
+      const text = $('#pText').value.trim();
+      if (!place) { showToast('请填写发现地点'); return; }
+      if (!text) { showToast('请写下你的感想'); return; }
+      savePost({
+        id: 'u' + Date.now(),
+        plantId: Number(pickedPlant) || 0,
+        place, text,
+        imgs: picked,
+        author: Auth.current().name,
+        time: '刚刚', likes: 0, comments: 0,
+      });
+      close(); showToast('发布成功');
+      renderFeed();
+    });
+  });
+
+  renderFeed();
+</script>
+</body>
+</html>

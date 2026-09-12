@@ -223,13 +223,21 @@ function navigate(url, text) {
   document.body.appendChild(mask);
   setTimeout(() => { location.href = url; }, 430);
 }
+/* 后退时清除残留遮罩 + 解锁 */
+window.addEventListener('pageshow', e => {
+  _navLock = false;
+  $$('.loader-mask').forEach(m => m.remove());
+});
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-nav]');
   if (a) { e.preventDefault(); navigate(a.dataset.nav || a.getAttribute('href'), a.dataset.navText); }
 });
 
-/* 页面进入 loader */
+/* 页面进入 loader（仅首次加载，后退 bfcache 恢复时跳过） */
+let _pageLoaded = false;
 function _bootPageLoader() {
+  if (_pageLoaded) return;
+  _pageLoaded = true;
   const mask = document.createElement('div');
   mask.className = 'loader-mask show';
   mask.style.background = 'rgba(242,245,241,.9)';
@@ -240,13 +248,16 @@ function _bootPageLoader() {
     setTimeout(() => { mask.classList.remove('show'); setTimeout(() => mask.remove(), 350); }, 380);
   }));
 }
+window.addEventListener('pageshow', e => {
+  if (e.persisted) { _pageLoaded = true; $$('.loader-mask').forEach(m => m.remove()); }
+});
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bootPageLoader);
 else _bootPageLoader();
 
 /* ---------------- 底部导航 ---------------- */
 function renderTabbar(active) {
   const items = [
-    { key: 'atlas', label: '图鉴', ic: 'book', url: 'index.html' },
+    { key: 'share', label: '分享', ic: 'sprout', url: 'share.html' },
     { key: 'map', label: '地图', ic: 'map', url: 'map.html' },
     { key: 'record', label: '记录', ic: 'camera', url: 'record.html' },
     { key: 'task', label: '任务', ic: 'list', url: 'task.html' },
@@ -262,6 +273,23 @@ function renderTabbar(active) {
     if (a) { e.preventDefault(); Auth.current() ? navigate(a.href) : navigate('auth.html', '请先登录'); return; }
   });
   document.body.appendChild(bar);
+
+  /* 右上角注入主页入口（除首页自身外的所有页面） */
+  if (active !== 'atlas' && active !== 'home') {
+    const header = $('.header .header-inner');
+    if (header) {
+      const sp = header.querySelector('.spacer');
+      if (sp) {
+        const homeBtn = document.createElement('a');
+        homeBtn.className = 'h-btn home-btn';
+        homeBtn.href = 'index.html';
+        homeBtn.title = '回到首页';
+        homeBtn.innerHTML = icon('home');
+        homeBtn.addEventListener('click', e => { e.preventDefault(); navigate('index.html', '回到首页'); });
+        sp.insertAdjacentElement('afterend', homeBtn);
+      }
+    }
+  }
 }
 
 /* ---------------- Toast ---------------- */
@@ -477,6 +505,7 @@ function showSheet(title, html, { full = false } = {}) {
   mask.className = 'sheet-mask';
   const panel = document.createElement('div');
   panel.className = 'sheet-panel';
+  panel.style.zIndex = '310';
   panel.innerHTML = `<div class="sheet-grip"></div>
     <div class="flex-between" style="padding:8px 20px 12px">
       <div style="font-size:16px;font-weight:700">${esc(title)}</div>
@@ -498,6 +527,7 @@ function showDrawer({ title = '筛选', groups = [], onConfirm, onReset }) {
   mask.className = 'sheet-mask';
   const panel = document.createElement('div');
   panel.className = 'drawer-panel';
+  panel.style.zIndex = '310';
   panel.innerHTML = `
     <div class="drawer-head"><div class="d-title">${esc(title)}</div>
       <button style="width:32px;height:32px;border-radius:50%;background:var(--bg-soft);display:flex;align-items:center;justify-content:center;color:var(--text-2)">${icon('close')}</button></div>

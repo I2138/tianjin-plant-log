@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>植物分布地图 · 津城植物日志</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=3">
+  <!-- Leaflet 真实地图 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>.drawer-panel{z-index:310!important}.sheet-panel{z-index:310!important}</style>
 </head>
 <body>
 
@@ -19,62 +22,60 @@
 </header>
 
 <div class="page">
-  <div class="map-stage-wrap">
-    <div class="map-stage" id="mapStage">
-      <div class="map-canvas" id="mapCanvas"></div>
-      <!-- 初始化骨架 -->
-      <div class="map-skeleton" id="mapSkeleton">
-        <svg class="ms-shape" viewBox="0 0 1000 760"><path d="M390 55 L450 35 L505 60 L530 105 L560 130 L625 150 L700 165 L760 195 L810 240 L845 300 L870 370 L860 430 L885 500 L875 570 L830 640 L760 690 L660 720 L540 735 L420 730 L320 705 L255 650 L225 570 L235 490 L265 420 L255 350 L295 275 L335 205 L355 130 Z" fill="#E2EBE0" stroke="#C9D8C8" stroke-width="4" stroke-dasharray="10 12" stroke-linejoin="round"/></svg>
-        <div style="display:flex;align-items:center;gap:10px"><div class="spinner"></div><span class="ms-text">点位加载中…</span></div>
-      </div>
-      <!-- 空状态 -->
-      <div class="map-empty hidden" id="mapEmpty">
-        <span style="color:var(--text-3)"></span>
-        <div class="me-title">当前筛选条件下暂无观测点位</div>
-        <div style="font-size:12px;color:var(--text-3)">试试放宽筛选范围</div>
-      </div>
-      <!-- 悬浮按钮 -->
-      <button class="map-fab" id="locBtn"><span id="locIcon"></span><span id="locText">我的位置</span></button>
-      <button class="map-zoom-fab hidden" id="zoomOutBtn">缩小视图</button>
+  <div class="realmap-wrap">
+    <div id="map"></div>
+    <!-- 初始化骨架 -->
+    <div class="map-loading" id="mapLoading">
+      <div class="spinner"></div>
+      <span>真实地图加载中…</span>
+    </div>
+    <!-- 空状态 -->
+    <div class="map-empty hidden" id="mapEmpty">
+      <div class="me-title">当前筛选条件下暂无观测点位</div>
+      <div style="font-size:12px;color:var(--text-3)">试试放宽筛选范围</div>
     </div>
     <div class="map-foot-note" id="footNote"></div>
     <div class="map-legend">
       <span class="lg"><i style="background:#6FA07A"></i>本土植物</span>
       <span class="lg"><i style="background:#C7A36B"></i>外来植物</span>
       <span class="lg"><i style="background:#C0827D"></i>入侵植物</span>
-      <span class="lg" style="margin-left:auto">点击圆点查看观测详情</span>
+      <span class="lg" style="margin-left:auto">点击圆点查看观测详情 · 滚轮缩放</span>
     </div>
   </div>
 </div>
 
-<script src="js/photos.js"></script>
-<script src="js/images.js"></script>
-<script src="js/data.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/common.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/photos.js?v=3"></script>
+<script src="js/images.js?v=3"></script>
+<script src="js/data.js?v=3"></script>
+<script src="js/storage.js?v=3"></script>
+<script src="js/common.js?v=3"></script>
 <script>
   $('#fIcon').innerHTML = icon('filter');
-  $('#locIcon').innerHTML = icon('locate');
   renderTabbar('map');
 
   /* ---------------- 状态 ---------------- */
   const filter = { type: '', attr: '', region: '' };
-  let view = { scale: 1, cx: 46, cy: 49.8 };   // 缩放中心（和平区聚合点）
-  const CLUSTER_REGION = '和平';
-  let visiblePoints = [];
-  let popEl = null;
+  let map = null, locMarker = null, locCircle = null, watchId = null, _dotLayer = null;
 
-  const canvas = $('#mapCanvas');
-
-  /* ---------------- 初始化底图 ---------------- */
-  canvas.innerHTML = TJ_MAP_SVG;
-  Object.entries(REGION_POS).forEach(([name, [x, y]]) => {
-    const lb = document.createElement('span');
-    lb.className = 'map-region-label';
-    lb.style.left = x + '%'; lb.style.top = y + '%';
-    lb.textContent = name;
-    canvas.appendChild(lb);
-  });
+  /* ---------------- 初始化真实地图（Leaflet + 高德瓦片） ---------------- */
+  function initMap() {
+    map = L.map('map', {
+      center: [39.12, 117.18],
+      zoom: 11,
+      minZoom: 8,
+      maxZoom: 18,
+      zoomControl: true,
+      attributionControl: false,
+    });
+    /* 高德矢量瓦片（无需 key，中文标注） */
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+      subdomains: ['1', '2', '3', '4'],
+      maxZoom: 18,
+    }).addTo(map);
+    _dotLayer = L.layerGroup().addTo(map);
+    renderDots();
+  }
 
   function currentPoints() {
     return MAP_POINTS.filter(pt => {
@@ -86,135 +87,45 @@
     });
   }
 
-  /* ---------------- 渲染点位（含聚合） ---------------- */
+  /* ---------------- 渲染点位（CircleMarker 小圆点） ---------------- */
   function renderDots() {
-    $$('.map-dot,.map-cluster', canvas).forEach(el => el.remove());
-    $$('.map-user-pin', $('#mapStage')).forEach(el => el.remove());
-    closePop();
-    visiblePoints = currentPoints();
-
-    if (!visiblePoints.length) {
-      $('#mapEmpty').classList.remove('hidden');
-      $('#mapEmpty').firstElementChild.innerHTML = icon('empty');
-      $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11')} 暂无匹配点位，试试调整筛选`;
+    if (!map || !_dotLayer) return;
+    _dotLayer.clearLayers();
+    const pts = currentPoints();
+    $('#mapEmpty').classList.toggle('hidden', pts.length > 0);
+    if (!pts.length) {
+      $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 暂无匹配点位，试试调整筛选`;
       return;
     }
-    $('#mapEmpty').classList.add('hidden');
-    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11')} 已收录天津街道、公园、社区、河岸、街角的植物观测点位 <b>${visiblePoints.length}</b> 个`;
+    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 已收录天津街道、公园、社区、河岸、街角的植物观测点位 <b>${pts.length}</b> 个`;
 
-    /* 和平区点位聚合（缩放时拆分） */
-    const clusterPts = visiblePoints.filter(pt => pt.region === CLUSTER_REGION);
-    const showCluster = view.scale === 1 && clusterPts.length >= 3;
-
-    /* 放大时对密集点位做微错开，避免重叠 */
-    const placed = [];
-    const sepPos = pos => {
-      if (view.scale === 1) return pos;
-      let [x, y] = pos;
-      for (let k = 0; k < 12; k++) {
-        const hit = placed.find(p => Math.hypot(p[0] - x, p[1] - y) < 2.4);
-        if (!hit) break;
-        y += 1.9; x += 0.35;
-      }
-      placed.push([x, y]);
-      return [x, y];
-    };
-
-    visiblePoints.forEach(pt => {
-      if (showCluster && pt.region === CLUSTER_REGION) return;
+    pts.forEach(pt => {
       const p = getPlant(pt.plantId);
-      const disp = sepPos(pt.pos);
-      const dot = document.createElement('span');
-      dot.className = 'map-dot';
-      dot.style.left = disp[0] + '%'; dot.style.top = disp[1] + '%';
-      dot.style.background = attrColor(p.attr);
-      dot.style.color = attrColor(p.attr);
-      dot.dataset.id = pt.id;
-      dot._dispPos = disp;
-      dot.addEventListener('click', e => { e.stopPropagation(); openPop(pt, dot); });
-      canvas.appendChild(dot);
+      if (!p) return;
+      const [lat, lng] = pointLatLng(pt);
+      const m = L.circleMarker([lat, lng], {
+        radius: 7,
+        color: '#fff',
+        weight: 1.5,
+        fillColor: attrColor(p.attr),
+        fillOpacity: 0.95,
+      });
+      m.bindPopup(`
+        <div style="min-width:150px">
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(p.name)} <span style="font-size:11px;color:${attrColor(p.attr)}">${attrLabel(p.attr)}</span></div>
+          <div style="font-size:12px;color:#666">${esc(pt.region)}区 · ${esc(pt.place)}</div>
+          <div style="font-size:11px;color:#999;margin-top:2px">最近观测：${esc(pt.time)}</div>
+          <a href="log-detail.html?id=dyn_${pt.id}" style="display:inline-block;margin-top:6px;font-size:12px;color:#4a7a55;font-weight:600">查看观察日志 →</a>
+        </div>`, { closeButton: true });
+      m.addTo(_dotLayer);
     });
 
-    if (showCluster) {
-      const cx = clusterPts.reduce((s, p) => s + p.pos[0], 0) / clusterPts.length;
-      const cy = clusterPts.reduce((s, p) => s + p.pos[1], 0) / clusterPts.length;
-      const cl = document.createElement('span');
-      cl.className = 'map-cluster';
-      cl.style.left = cx + '%'; cl.style.top = cy + '%';
-      cl.textContent = clusterPts.length;
-      cl.addEventListener('click', e => { e.stopPropagation(); zoomIn(cx, cy); });
-      canvas.appendChild(cl);
+    /* 自动适配视野（全量时不缩放，避免每次筛选都跳视野） */
+    if (pts.length && !filter.type && !filter.attr && !filter.region) {
+      const latlngs = pts.map(pt => { const [a, b] = pointLatLng(pt); return [a, b]; });
+      try { map.fitBounds(L.latLngBounds(latlngs).pad(0.1)); } catch (e) {}
     }
   }
-
-  /* ---------------- 缩放 ---------------- */
-  function applyView() {
-    canvas.style.transformOrigin = `${view.cx}% ${view.cy}%`;
-    canvas.style.transform = `scale(${view.scale})`;
-    canvas.style.setProperty('--cs', 1 / view.scale);
-    $('#zoomOutBtn').classList.toggle('hidden', view.scale === 1);
-    if (view.scale > 1) showToast('已放大和平区，聚合点位已拆分');
-  }
-  function zoomIn(cx, cy) {
-    view = { scale: 2.6, cx, cy };
-    applyView();
-    renderDots();
-  }
-  function zoomOut() {
-    view = { scale: 1, cx: 46, cy: 49.8 };
-    applyView();
-    renderDots();
-    showToast('已恢复全市视图');
-  }
-  $('#zoomOutBtn').addEventListener('click', zoomOut);
-
-  /* 点位视觉坐标（stage 像素，考虑缩放） */
-  function visualXY(pos) {
-    const stage = $('#mapStage');
-    const W = stage.clientWidth, H = stage.clientHeight;
-    return [
-      W * (view.cx + (pos[0] - view.cx) * view.scale) / 100,
-      H * (view.cy + (pos[1] - view.cy) * view.scale) / 100,
-    ];
-  }
-
-  /* ---------------- 悬浮信息窗（stage 层，不受缩放影响） ---------------- */
-  function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
-
-  function openPop(pt, dot) {
-    closePop();
-    $$('.map-dot.selected').forEach(d => d.classList.remove('selected'));
-    dot.classList.add('selected');
-    const p = getPlant(pt.plantId);
-    const log = BUILTIN_LOGS.find(l => l.pointId === pt.id);
-    const disp = dot._dispPos || pt.pos;
-    const [vx, vy] = visualXY(disp);
-    const stage = $('#mapStage');
-    const up = vy < 240;
-    const pop = document.createElement('div');
-    pop.className = 'map-pop' + (up ? ' up' : '');
-    pop.style.left = vx + 'px';
-    pop.style.top = vy + 'px';
-    pop.style.transform = `translate(-50%, ${up ? '16px' : 'calc(-100% - 16px)'})`;
-    pop.innerHTML = `
-      <button class="mp-close">${icon('close')}</button>
-      <div class="mp-img">${imgBoxHTML()}</div>
-      <div class="mp-body">
-        <div class="mp-name">${esc(p.name)} <span class="tag ${attrClass(p.attr)}" style="margin-left:4px">${attrLabel(p.attr)}</span></div>
-        <div class="mp-meta">${esc(pt.region)}区 · ${esc(pt.place)}<br>最近观测：${esc(pt.time)}${log ? ` · by ${esc(log.author)}` : ''}</div>
-        <a class="mp-btn" href="log-detail.html?id=${log ? log.id : 'dyn_' + pt.id}" data-nav="log-detail.html?id=${log ? log.id : 'dyn_' + pt.id}" data-nav-text="正在查看观察日志">查看详情</a>
-      </div>`;
-    stage.appendChild(pop);
-    popEl = pop;
-    mountImg($('.img-box', pop), plantCover(p.id), { delay: 250 });
-    $('.mp-close', pop).addEventListener('click', e => { e.stopPropagation(); closePop(); dot.classList.remove('selected'); });
-  }
-
-  $('#mapStage').addEventListener('click', e => {
-    if (e.target.closest('.map-dot') || e.target.closest('.map-pop') || e.target.closest('.map-cluster') || e.target.closest('.map-fab') || e.target.closest('.map-zoom-fab')) return;
-    closePop();
-    $$('.map-dot.selected').forEach(d => d.classList.remove('selected'));
-  });
 
   /* ---------------- 筛选抽屉 ---------------- */
   $('#filterBtn').addEventListener('click', () => {
@@ -229,7 +140,7 @@
         filter.type = state.type[0] === '全部' ? '' : (state.type[0] || '');
         filter.attr = state.attr[0] || '';
         filter.region = state.region[0] || '';
-        reloadWithLoading();
+        renderDots();
       },
       onReset() {
         filter.type = ''; filter.attr = ''; filter.region = '';
@@ -237,71 +148,45 @@
     });
   });
 
-  function reloadWithLoading() {
-    view = { scale: 1, cx: 46, cy: 49.8 };
-    applyView();
-    const sk = $('#mapSkeleton');
-    sk.classList.remove('hidden');
-    $('.ms-text', sk).textContent = '按筛选条件加载点位…';
-    setTimeout(() => {
-      sk.classList.add('hidden');
-      $('.ms-text', sk).textContent = '点位加载中…';
-      renderDots();
-    }, 800);
+  /* ---------------- 真实定位（跟随移动） ---------------- */
+  function startLocation() {
+    if (!navigator.geolocation) { showToast('当前浏览器不支持定位'); return; }
+    const ok = pos => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      if (!locMarker) {
+        locMarker = L.marker([latitude, longitude], { zIndexOffset: 1000 }).addTo(map);
+        locMarker.bindPopup('<b>我的位置</b>').openPopup();
+        locCircle = L.circle([latitude, longitude], { radius: accuracy || 50, color: '#4a7a5a', fillColor: '#4a7a5a', fillOpacity: .12, weight: 1 }).addTo(map);
+      } else {
+        locMarker.setLatLng([latitude, longitude]);
+        locCircle.setLatLng([latitude, longitude]);
+        locCircle.setRadius(accuracy || 50);
+      }
+      map.setView([latitude, longitude], 14);
+      showToast('已定位到你的真实位置，移动时会持续更新');
+    };
+    const err = () => showToast('定位失败：请检查浏览器定位权限后重试');
+    watchId = navigator.geolocation.watchPosition(ok, err, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
   }
 
-  /* ---------------- 我的位置 ---------------- */
-  $('#locBtn').addEventListener('click', () => {
-    const btn = $('#locBtn');
-    if (btn.disabled) return;
-    btn.disabled = true;
-    $('#locIcon').innerHTML = '<div class="spinner"></div>';
-    $('#locText').textContent = '定位中…';
-    setTimeout(() => {
-      btn.disabled = false;
-      $('#locIcon').innerHTML = icon('locate');
-      $('#locText').textContent = '我的位置';
-      if (Math.random() < 0.15) {
-        showErrorModal('定位失败：未能获取当前位置。\n请检查浏览器定位权限后重试。', '定位失败');
-        return;
-      }
-      /* 模拟定位在河西区文化中心附近 */
-      const ux = 44.6 + Math.random() * 1.6, uy = 54.5 + Math.random() * 1.2;
-      const stage = $('#mapStage');
-      $$('.map-user-pin', stage).forEach(e => e.remove());
-      const [pvx, pvy] = visualXY([ux, uy]);
-      const pin = document.createElement('div');
-      pin.className = 'map-user-pin';
-      pin.style.left = pvx + 'px'; pin.style.top = pvy + 'px';
-      pin.innerHTML = `<svg width="34" height="34" viewBox="0 0 24 24" fill="#46604C"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="3" fill="#fff"/></svg>`;
-      stage.appendChild(pin);
-      /* 高亮附近观测点 */
-      const near = visiblePoints.map(pt => ({ pt, d: Math.hypot(pt.pos[0] - ux, pt.pos[1] - uy) })).sort((a, b) => a.d - b.d).slice(0, 3);
-      near.forEach(({ pt }) => {
-        const dot = $(`.map-dot[data-id="${pt.id}"]`);
-        if (dot) dot.classList.add('selected');
-      });
-      showToast(`已定位到河西区附近，${near.length} 个观测点已高亮`);
-    }, 1200);
-  });
-
-  /* ---------------- 初始化（骨架 → 渲染 → URL 定位） ---------------- */
+  /* ---------------- 初始化 ---------------- */
   setTimeout(() => {
-    $('#mapSkeleton').classList.add('hidden');
-    renderDots();
+    $('#mapLoading').classList.add('hidden');
+    initMap();
+    /* 若浏览器拒绝定位不阻塞地图展示 */
+    try { startLocation(); } catch (e) {}
     const target = qs('point');
     if (target) {
-      setTimeout(() => {
-        const dot = $(`.map-dot[data-id="${target}"]`);
-        if (dot) {
-          const pt = getPoint(target);
-          if (pt) openPop(pt, dot);
-        }
-      }, 350);
+      const pt = getPoint(target);
+      if (pt) {
+        const [lat, lng] = pointLatLng(pt);
+        setTimeout(() => {
+          map.setView([lat, lng], 15);
+          L.circleMarker([lat, lng], { radius: 10, color: '#E07A5F', weight: 2, fillColor: '#E07A5F', fillOpacity: .4 }).addTo(map);
+        }, 600);
+      }
     }
-  }, 900);
+  }, 400);
 </script>
 </body>
 </html>
-
-
