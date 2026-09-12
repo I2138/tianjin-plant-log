@@ -261,32 +261,32 @@ function renderTabbar(active) {
     { key: 'map', label: '地图', ic: 'map', url: 'map.html' },
     { key: 'record', label: '记录', ic: 'camera', url: 'record.html' },
     { key: 'task', label: '任务', ic: 'list', url: 'task.html' },
-    { key: 'mine', label: '我的', ic: 'user', url: 'profile.html' },
+    { key: 'atlas', label: '图鉴', ic: 'book', url: 'atlas.html' },
   ];
   const bar = document.createElement('nav');
   bar.className = 'tabbar';
   bar.innerHTML = `<div class="tabbar-inner">${items.map(it => `
-    <a href="${it.url}" ${it.key === 'mine' && !Auth.current() ? 'data-auth' : ''} class="${it.key === active ? 'active' : ''}">
+    <a href="${it.url}" class="${it.key === active ? 'active' : ''}">
       ${icon(it.ic)}<span>${it.label}</span></a>`).join('')}</div>`;
-  bar.addEventListener('click', e => {
-    const a = e.target.closest('a[data-auth]');
-    if (a) { e.preventDefault(); Auth.current() ? navigate(a.href) : navigate('auth.html', '请先登录'); return; }
-  });
   document.body.appendChild(bar);
 
-  /* 右上角注入主页入口（除首页自身外的所有页面） */
-  if (active !== 'atlas' && active !== 'home') {
-    const header = $('.header .header-inner');
+  /* 右上角注入"我的"入口（分享页本身不注入，其余所有页面都注入） */
+  if (active !== 'share') {
+    const header = $('.header .header-inner') || $('.sub-header .header-inner');
     if (header) {
       const sp = header.querySelector('.spacer');
       if (sp) {
-        const homeBtn = document.createElement('a');
-        homeBtn.className = 'h-btn home-btn';
-        homeBtn.href = 'index.html';
-        homeBtn.title = '回到首页';
-        homeBtn.innerHTML = icon('home');
-        homeBtn.addEventListener('click', e => { e.preventDefault(); navigate('index.html', '回到首页'); });
-        sp.insertAdjacentElement('afterend', homeBtn);
+        const profileBtn = document.createElement('a');
+        profileBtn.className = 'h-btn home-btn';
+        profileBtn.href = 'profile.html';
+        profileBtn.title = '我的';
+        profileBtn.innerHTML = icon('user');
+        profileBtn.addEventListener('click', e => {
+          e.preventDefault();
+          if (Auth.current()) navigate('profile.html', '我的');
+          else navigate('auth.html', '请先登录');
+        });
+        sp.insertAdjacentElement('afterend', profileBtn);
       }
     }
   }

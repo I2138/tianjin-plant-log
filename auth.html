@@ -100,7 +100,7 @@
   });
 
   /* 游客浏览 */
-  $('#guestBtn').addEventListener('click', () => navigate('index.html', '正在进入图鉴'));
+  $('#guestBtn').addEventListener('click', () => navigate('share.html', '正在进入首页'));
 
   function fieldError(form, field, on) {
     const g = form.querySelector(`[data-field="${field}"]`);
@@ -129,7 +129,7 @@
         return;
       }
       showToast(`欢迎回来，${r.user.name}`);
-      setTimeout(() => navigate('index.html', '正在进入图鉴'), 500);
+      setTimeout(() => navigate('share.html', '正在进入首页'), 500);
     }, 900);
   });
 
@@ -155,7 +155,7 @@
         icon: 'success', title: '注册成功',
         content: `欢迎加入，${r.user.name}！\n你的专属数据空间已创建：\n观察日志 / 草稿 / 收藏 / 上报互不干扰。`,
         confirmText: '开始逛逛',
-        onConfirm: () => navigate('index.html', '正在进入图鉴'),
+        onConfirm: () => navigate('share.html', '正在进入首页'),
       });
     }, 900);
   });
