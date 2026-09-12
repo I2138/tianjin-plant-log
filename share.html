@@ -26,7 +26,21 @@
   </div>
 </div>
 
-<div class="page share-page">
+<div class="page share-page" style="padding-top:0">
+  <!-- 家养绿植分享与求助 -->
+  <div class="home-plant-zone">
+    <div class="hpz-head">
+      <span class="hpz-bar"></span>家养绿植 · 分享与求助
+      <button class="hpz-tab active" data-tab="share">分享</button>
+      <button class="hpz-tab" data-tab="help">求助</button>
+    </div>
+    <div id="homePlantList" class="hpz-list"></div>
+    <button class="hpz-more" id="hpzMore">查看更多家养绿植 →</button>
+  </div>
+  <!-- 户外发现动态 -->
+  <div class="hpz-head" style="padding:0 8px;margin-top:6px">
+    <span class="hpz-bar"></span>户外发现 · 交流广场
+  </div>
   <div id="feedList" class="xhs-grid"></div>
   <div id="feedFooter"></div>
 </div>
@@ -58,6 +72,67 @@
     { id: 'sf11', author: '盘山樵客', time: '2 周前', plantId: 73, place: '蓟州区 · 盘山景区', text: '盘山路边的黄刺玫满枝金黄，和翠绿的山坡对比太鲜明了。春天山里的颜色就是饱和。', likes: 85, comments: 6, imgs: ['p73_0.jpg'] },
     { id: 'sf12', author: '津南菜农', time: '2 周前', plantId: 85, place: '津南区 · 咸水沽', text: '路边坡上的马蔺开了，蓝紫色的花在盐碱地上成片，叶子韧得能编绳。天津本地的铁杆花。', likes: 62, comments: 5, imgs: ['p85_0.jpg'] },
   ];
+
+  /* ---------------- 家养绿植分享与求助（所有人可见） ---------------- */
+  const HOME_PLANTS = [
+    { id: 'hp1', type: 'share', author: '阳台园丁', time: '1 小时前', plantId: 50, place: '我家阳台', text: '栀子花终于开花了！养了两年第一次开，香味把整个客厅都熏甜了。诀窍就是酸性土+多晒。', likes: 42, comments: 8 },
+    { id: 'hp2', type: 'help', author: '新手养花', time: '3 小时前', plantId: 89, place: '室内', text: '我家常春藤叶子发黄掉落，放在北窗边，浇水也不多。是光照不够还是浇水有问题？求大神指点。', likes: 5, comments: 12 },
+    { id: 'hp3', type: 'share', author: '多肉爱好者', time: '昨天', plantId: 80, place: '窗台', text: '玉簪在北阳台长得太好了，叶面油亮，今年夏天还开了一串白花。耐阴植物的首选。', likes: 28, comments: 4 },
+    { id: 'hp4', type: 'help', author: '绿萝杀手', time: '昨天', plantId: 53, place: '客厅', text: '金银花盆栽叶子卷曲有蚜虫，不想打农药，有没有环保的方法除虫？', likes: 3, comments: 15 },
+    { id: 'hp5', type: 'share', author: '厨房花园', time: '2 天前', plantId: 36, place: '阳台菜箱', text: '阳台上种的香椿芽冒了！春天自己采香椿芽炒鸡蛋，从阳台到餐桌零距离。', likes: 56, comments: 7 },
+    { id: 'hp6', type: 'share', author: '北窗花友', time: '3 天前', plantId: 79, place: '北阳台', text: '鸢尾在北阳台也开花了，蓝紫色花朵特别上照。耐阴草本真的省心。', likes: 31, comments: 3 },
+  ];
+
+  function renderHomePlants() {
+    const tab = document.querySelector('.hpz-tab.active')?.dataset.tab || 'share';
+    const list = HOME_PLANTS.filter(p => p.type === tab);
+    const host = $('#homePlantList');
+    if (!list.length) { host.innerHTML = '<div class="hpz-empty">暂无内容，快来第一个分享吧</div>'; return; }
+    host.innerHTML = list.map(p => {
+      const plant = getPlant(p.plantId);
+      const pname = plant ? plant.name : '绿植';
+      const isHelp = p.type === 'help';
+      return `
+      <div class="hpz-card" data-id="${p.id}">
+        <div class="hpz-card-head">
+          <div class="hpz-av">${avatar(p.author, 32)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="hpz-name">${esc(p.author)}</div>
+            <div class="hpz-meta">${esc(p.time)} · ${esc(p.place)}</div>
+          </div>
+          <span class="hpz-badge ${isHelp ? 'help' : 'share'}">${isHelp ? '求助' : '分享'}</span>
+        </div>
+        <div class="hpz-text">${esc(p.text)}</div>
+        <div class="hpz-plant">${icon('leaf').replace('22" height="22','12" height="12')} ${esc(pname)}</div>
+        <div class="hpz-actions">
+          <span class="hpz-act">${icon('heart')} ${p.likes}</span>
+          <span class="hpz-act">${icon('comment')} ${p.comments}</span>
+        </div>
+      </div>`;
+    }).join('');
+    host.querySelectorAll('.hpz-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const p = HOME_PLANTS.find(x => x.id === id);
+        if (!p) return;
+        openPostDetail({ ...p, imgs: [], plantId: p.plantId });
+      });
+    });
+  }
+  document.querySelectorAll('.hpz-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.hpz-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderHomePlants();
+    });
+  });
+  $('#hpzMore').addEventListener('click', () => {
+    document.querySelectorAll('.hpz-tab').forEach(b => b.classList.remove('active'));
+    const shareTab = document.querySelector('.hpz-tab[data-tab="share"]');
+    shareTab.classList.add('active');
+    renderHomePlants();
+    $('#homePlantList').scrollIntoView({ behavior: 'smooth' });
+  });
 
   /* ---------------- 数据读写（localStorage 真实存储） ---------------- */
   function allPosts() { return [...UD.get('posts', []), ...SEED_FEED]; }
@@ -291,6 +366,7 @@
     });
   });
 
+  renderHomePlants();
   renderFeed();
 </script>
 </body>
