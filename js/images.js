@@ -129,9 +129,12 @@ function plantCover(plantId) { return plantPhoto(plantId, 0); }
 
 /* 头像（首字符 + 莫兰迪底色） */
 function avatar(name, size = 72) {
-  const ch = (name || '友').trim().charAt(0).toUpperCase();
-  const bg = MORANDI.bgs[(name || '').length % MORANDI.bgs.length][1];
-  const ink = MORANDI.inks[(name || '').length % MORANDI.inks.length];
+  const n = (name || '友').trim();
+  const ch = n.charAt(0).toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < n.length; i++) hash = (hash * 31 + n.charCodeAt(i)) >>> 0;
+  const bg = MORANDI.bgs[hash % MORANDI.bgs.length][1];
+  const ink = MORANDI.inks[hash % MORANDI.inks.length];
   return _svg(size, size,
     `<rect width="${size}" height="${size}" rx="${size / 2}" fill="${bg}"/>
      <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"

@@ -59,28 +59,28 @@
 
   /* ---------------- 内置动态（所有人进站可见） ---------------- */
   const SEED_FEED = [
-    { id: 'sf1', author: '海河漫步', time: '2 小时前', plantId: 1, place: '和平区 · 五大道睦南道', text: '睦南道这棵百年国槐今天拍到了满树新叶，透光看特别漂亮。城市里的古树就是会呼吸的历史。', likes: 126, comments: 14, imgs: ['p1_0.jpg','p1_1.jpg'] },
-    { id: 'sf2', author: '津门花匠', time: '昨天 18:20', plantId: 22, place: '红桥区 · 北运河桃花堤', text: '桃花堤的碧桃盛开了！粉色的云压满枝头，路过的人都忍不住拍照。春日限定美景。', likes: 288, comments: 32, imgs: ['p22_0.jpg','p22_1.jpg'] },
-    { id: 'sf3', author: '柳絮飞时', time: '昨天 09:15', plantId: 29, place: '蓟州区 · 盘山磨盘柿沟', text: '盘山脚下的柿子林开始挂果了，磨盘柿个头真的大，像小灯笼一样。秋天来蓟州一定要尝一口霜柿。', likes: 145, comments: 17, imgs: ['p29_0.jpg'] },
-    { id: 'sf4', author: '五大道扫街', time: '3 天前', plantId: 17, place: '南开区 · 水上公园银杏道', text: '水上公园的银杏道已经开始变色，黄绿相间的过渡期其实比全黄更有层次感，推荐下周来打卡。', likes: 167, comments: 19, imgs: ['p17_0.jpg'] },
-    { id: 'sf5', author: '北宁晨练者', time: '4 天前', plantId: 43, place: '河北区 · 北宁公园', text: '北宁公园的樱花今年开了，粉白色的花苞已经挂满枝头，晨练遛弯的好地方。', likes: 133, comments: 15, imgs: ['p43_0.jpg'] },
-    { id: 'sf6', author: '湿地观察员', time: '5 天前', plantId: 57, place: '宁河区 · 七里海湿地', text: '七里海的香蒲已经抽出腊肠花序，水鸟在芦苇丛里做窝。湿地生态修复效果肉眼可见。', likes: 152, comments: 16, imgs: ['p57_0.jpg'] },
-    { id: 'sf7', author: '白蜡树下', time: '5 天前', plantId: 61, place: '南开区 · 水上公园', text: '水上公园的白玉兰开了，满树洁白如雪，花香清远。天津早春最早开花的乔木，值得专门来看。', likes: 98, comments: 11, imgs: ['p61_0.jpg'] },
-    { id: 'sf8', author: '绿园小记', time: '6 天前', plantId: 64, place: '河西区 · 友谊路', text: '友谊路的元宝枫秋叶红了！掌状五裂叶在阳光下透亮，翅果像元宝倒挂，太精致了。', likes: 112, comments: 8, imgs: ['p64_0.jpg'] },
-    { id: 'sf9', author: '盐碱地记录者', time: '1 周前', plantId: 70, place: '滨海新区 · 生态城', text: '滨海生态城的柽柳开花了，粉红色花穗在盐碱地上随风摇曳，一年三季开花不是吹的。', likes: 76, comments: 9, imgs: ['p70_0.jpg'] },
-    { id: 'sf10', author: '老城寻花', time: '1 周前', plantId: 72, place: '和平区 · 睦南道花园', text: '围栏上的蔷薇花墙开了，白色小花密集成片，蜜蜂嗡嗡地转。老洋房配花墙，五大道的标配浪漫。', likes: 189, comments: 23, imgs: ['p72_0.jpg'] },
-    { id: 'sf11', author: '盘山樵客', time: '2 周前', plantId: 73, place: '蓟州区 · 盘山景区', text: '盘山路边的黄刺玫满枝金黄，和翠绿的山坡对比太鲜明了。春天山里的颜色就是饱和。', likes: 85, comments: 6, imgs: ['p73_0.jpg'] },
-    { id: 'sf12', author: '津南菜农', time: '2 周前', plantId: 85, place: '津南区 · 咸水沽', text: '路边坡上的马蔺开了，蓝紫色的花在盐碱地上成片，叶子韧得能编绳。天津本地的铁杆花。', likes: 62, comments: 5, imgs: ['p85_0.jpg'] },
+    { id: 'sf1', author: '海河漫步', avatarSeed: '海河', time: '2 小时前', plantId: 1, place: '和平区 · 五大道睦南道', text: '睦南道这棵百年国槐今天拍到了满树新叶，透光看特别漂亮。城市里的古树就是会呼吸的历史。', likes: 126, comments: 14, imgs: ['p1_0.jpg','p1_1.jpg'] },
+    { id: 'sf2', author: '津门花匠', avatarSeed: '花匠', time: '昨天 18:20', plantId: 22, place: '红桥区 · 北运河桃花堤', text: '桃花堤的碧桃盛开了！粉色的云压满枝头，路过的人都忍不住拍照。春日限定美景。', likes: 288, comments: 32, imgs: ['p22_0.jpg','p22_1.jpg'] },
+    { id: 'sf3', author: '柳絮飞时', avatarSeed: '柳絮', time: '昨天 09:15', plantId: 29, place: '蓟州区 · 盘山磨盘柿沟', text: '盘山脚下的柿子林开始挂果了，磨盘柿个头真的大，像小灯笼一样。秋天来蓟州一定要尝一口霜柿。', likes: 145, comments: 17, imgs: ['p29_0.jpg'] },
+    { id: 'sf4', author: '五大道扫街', avatarSeed: '扫街', time: '3 天前', plantId: 17, place: '南开区 · 水上公园银杏道', text: '水上公园的银杏道已经开始变色，黄绿相间的过渡期其实比全黄更有层次感，推荐下周来打卡。', likes: 167, comments: 19, imgs: ['p17_0.jpg'] },
+    { id: 'sf5', author: '北宁晨练者', avatarSeed: '晨练', time: '4 天前', plantId: 43, place: '河北区 · 北宁公园', text: '北宁公园的樱花今年开了，粉白色的花苞已经挂满枝头，晨练遛弯的好地方。', likes: 133, comments: 15, imgs: ['p43_0.jpg'] },
+    { id: 'sf6', author: '湿地观察员', avatarSeed: '湿地', time: '5 天前', plantId: 57, place: '宁河区 · 七里海湿地', text: '七里海的香蒲已经抽出腊肠花序，水鸟在芦苇丛里做窝。湿地生态修复效果肉眼可见。', likes: 152, comments: 16, imgs: ['p57_0.jpg'] },
+    { id: 'sf7', author: '白蜡树下', avatarSeed: '白蜡', time: '5 天前', plantId: 61, place: '南开区 · 水上公园', text: '水上公园的白玉兰开了，满树洁白如雪，花香清远。天津早春最早开花的乔木，值得专门来看。', likes: 98, comments: 11, imgs: ['p61_0.jpg'] },
+    { id: 'sf8', author: '绿园小记', avatarSeed: '绿园', time: '6 天前', plantId: 64, place: '河西区 · 友谊路', text: '友谊路的元宝枫秋叶红了！掌状五裂叶在阳光下透亮，翅果像元宝倒挂，太精致了。', likes: 112, comments: 8, imgs: ['p64_0.jpg'] },
+    { id: 'sf9', author: '盐碱地记录者', avatarSeed: '盐碱', time: '1 周前', plantId: 70, place: '滨海新区 · 生态城', text: '滨海生态城的柽柳开花了，粉红色花穗在盐碱地上随风摇曳，一年三季开花不是吹的。', likes: 76, comments: 9, imgs: ['p70_0.jpg'] },
+    { id: 'sf10', author: '老城寻花', avatarSeed: '老城', time: '1 周前', plantId: 72, place: '和平区 · 睦南道花园', text: '围栏上的蔷薇花墙开了，白色小花密集成片，蜜蜂嗡嗡地转。老洋房配花墙，五大道的标配浪漫。', likes: 189, comments: 23, imgs: ['p72_0.jpg'] },
+    { id: 'sf11', author: '盘山樵客', avatarSeed: '盘山', time: '2 周前', plantId: 73, place: '蓟州区 · 盘山景区', text: '盘山路边的黄刺玫满枝金黄，和翠绿的山坡对比太鲜明了。春天山里的颜色就是饱和。', likes: 85, comments: 6, imgs: ['p73_0.jpg'] },
+    { id: 'sf12', author: '津南菜农', avatarSeed: '菜农', time: '2 周前', plantId: 85, place: '津南区 · 咸水沽', text: '路边坡上的马蔺开了，蓝紫色的花在盐碱地上成片，叶子韧得能编绳。天津本地的铁杆花。', likes: 62, comments: 5, imgs: ['p85_0.jpg'] },
   ];
 
   /* ---------------- 家养绿植分享与求助（所有人可见） ---------------- */
   const HOME_PLANTS = [
-    { id: 'hp1', type: 'share', author: '阳台园丁', time: '1 小时前', plantId: 50, place: '我家阳台', text: '栀子花终于开花了！养了两年第一次开，香味把整个客厅都熏甜了。诀窍就是酸性土+多晒。', likes: 42, comments: 8 },
-    { id: 'hp2', type: 'help', author: '新手养花', time: '3 小时前', plantId: 89, place: '室内', text: '我家常春藤叶子发黄掉落，放在北窗边，浇水也不多。是光照不够还是浇水有问题？求大神指点。', likes: 5, comments: 12 },
-    { id: 'hp3', type: 'share', author: '多肉爱好者', time: '昨天', plantId: 80, place: '窗台', text: '玉簪在北阳台长得太好了，叶面油亮，今年夏天还开了一串白花。耐阴植物的首选。', likes: 28, comments: 4 },
-    { id: 'hp4', type: 'help', author: '绿萝杀手', time: '昨天', plantId: 53, place: '客厅', text: '金银花盆栽叶子卷曲有蚜虫，不想打农药，有没有环保的方法除虫？', likes: 3, comments: 15 },
-    { id: 'hp5', type: 'share', author: '厨房花园', time: '2 天前', plantId: 36, place: '阳台菜箱', text: '阳台上种的香椿芽冒了！春天自己采香椿芽炒鸡蛋，从阳台到餐桌零距离。', likes: 56, comments: 7 },
-    { id: 'hp6', type: 'share', author: '北窗花友', time: '3 天前', plantId: 79, place: '北阳台', text: '鸢尾在北阳台也开花了，蓝紫色花朵特别上照。耐阴草本真的省心。', likes: 31, comments: 3 },
+    { id: 'hp1', type: 'share', author: '阳台园丁', avatarSeed: '阳台', time: '1 小时前', plantId: 50, place: '我家阳台', text: '栀子花终于开花了！养了两年第一次开，香味把整个客厅都熏甜了。诀窍就是酸性土+多晒。', likes: 42, comments: 8, imgs: ['p50_0.jpg'] },
+    { id: 'hp2', type: 'help', author: '新手养花', avatarSeed: '新手', time: '3 小时前', plantId: 89, place: '室内', text: '我家常春藤叶子发黄掉落，放在北窗边，浇水也不多。是光照不够还是浇水有问题？求大神指点。', likes: 5, comments: 12, imgs: ['p89_0.jpg'] },
+    { id: 'hp3', type: 'share', author: '多肉爱好者', avatarSeed: '多肉', time: '昨天', plantId: 80, place: '窗台', text: '玉簪在北阳台长得太好了，叶面油亮，今年夏天还开了一串白花。耐阴植物的首选。', likes: 28, comments: 4, imgs: ['p80_0.jpg'] },
+    { id: 'hp4', type: 'help', author: '绿萝杀手', avatarSeed: '绿萝', time: '昨天', plantId: 53, place: '客厅', text: '金银花盆栽叶子卷曲有蚜虫，不想打农药，有没有环保的方法除虫？', likes: 3, comments: 15, imgs: ['p53_0.jpg'] },
+    { id: 'hp5', type: 'share', author: '厨房花园', avatarSeed: '厨房', time: '2 天前', plantId: 36, place: '阳台菜箱', text: '阳台上种的香椿芽冒了！春天自己采香椿芽炒鸡蛋，从阳台到餐桌零距离。', likes: 56, comments: 7, imgs: ['p36_0.jpg'] },
+    { id: 'hp6', type: 'share', author: '北窗花友', avatarSeed: '北窗', time: '3 天前', plantId: 79, place: '北阳台', text: '鸢尾在北阳台也开花了，蓝紫色花朵特别上照。耐阴草本真的省心。', likes: 31, comments: 3, imgs: ['p79_0.jpg'] },
   ];
 
   function renderHomePlants() {
@@ -92,10 +92,12 @@
       const plant = getPlant(p.plantId);
       const pname = plant ? plant.name : '绿植';
       const isHelp = p.type === 'help';
+      const av = p.avatarSeed || p.author || '友';
+      const cover = (p.imgs && p.imgs.length) ? `<div class="hpz-cover"><div class="img-box"><img alt=""></div></div>` : '';
       return `
       <div class="hpz-card" data-id="${p.id}">
         <div class="hpz-card-head">
-          <div class="hpz-av">${avatar(p.author, 32)}</div>
+          <div class="hpz-av"><img src="${avatar(av, 32)}" alt=""></div>
           <div style="flex:1;min-width:0">
             <div class="hpz-name">${esc(p.author)}</div>
             <div class="hpz-meta">${esc(p.time)} · ${esc(p.place)}</div>
@@ -103,6 +105,7 @@
           <span class="hpz-badge ${isHelp ? 'help' : 'share'}">${isHelp ? '求助' : '分享'}</span>
         </div>
         <div class="hpz-text">${esc(p.text)}</div>
+        ${cover}
         <div class="hpz-plant">${icon('leaf').replace('22" height="22','12" height="12')} ${esc(pname)}</div>
         <div class="hpz-actions">
           <span class="hpz-act">${icon('heart')} ${p.likes}</span>
@@ -110,12 +113,20 @@
         </div>
       </div>`;
     }).join('');
+    /* 封面图加载 */
+    host.querySelectorAll('.hpz-card').forEach((card, i) => {
+      const p = list[i];
+      if (!p || !p.imgs || !p.imgs.length || !p.plantId) return;
+      const plant = getPlant(p.plantId);
+      const box = card.querySelector('.hpz-cover .img-box');
+      if (box) mountImg(box, plantPhoto(plant.id, 0), { delay: 200 + i * 80 });
+    });
     host.querySelectorAll('.hpz-card').forEach(card => {
       card.addEventListener('click', () => {
         const id = card.dataset.id;
         const p = HOME_PLANTS.find(x => x.id === id);
         if (!p) return;
-        openPostDetail({ ...p, imgs: [], plantId: p.plantId });
+        openPostDetail({ ...p, imgs: p.imgs || [], plantId: p.plantId });
       });
     });
   }
@@ -191,7 +202,7 @@
           <div class="xhs-plant">${icon('leaf').replace('22" height="22','13" height="13')} ${esc(pname)}</div>
           <div class="xhs-bottom">
             <div class="xhs-author">
-              <span class="xhs-av">${avatar(p.author || '友', 22)}</span>
+              <span class="xhs-av"><img src="${avatar(p.avatarSeed || p.author || '友', 22)}" alt=""></span>
               <span>${esc(p.author || '植物爱好者')}</span>
             </div>
             <div class="xhs-likes ${liked ? 'on' : ''}" data-act="like">
@@ -245,7 +256,7 @@
     const photos = (p.imgs || []).map((_, k) => `<div class="fp-img"><div class="img-box" style="width:100%;height:100%"><img alt=""></div></div>`).join('');
     const { close, panel } = showSheet(`${esc(p.author)} 的分享`, `
       <div class="fp-head" style="margin-bottom:12px">
-        <div class="fp-avatar">${avatar(p.author || '友', 38)}</div>
+        <div class="fp-avatar"><img src="${avatar(p.avatarSeed || p.author || '友', 38)}" alt=""></div>
         <div style="flex:1;min-width:0">
           <div class="fp-name">${esc(p.author || '植物爱好者')}</div>
           <div class="fp-meta">${esc(p.time)} · ${esc(p.place)}</div>
