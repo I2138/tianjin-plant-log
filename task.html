@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>公共观察任务 · 津城植物日志</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2">
-  <link rel="stylesheet" href="css/pages.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/pages.css?v=4">
 </head>
 <body>
 
@@ -18,26 +18,38 @@
   </div>
 </header>
 
-<div class="page">
-  <!-- 状态标签 -->
-  <div class="chips-fade chips-fade-bg mt-12">
-    <div class="chips-scroll" id="statusChips">
-      <button class="chip active" data-v="">全部</button>
-      <button class="chip" data-v="recruiting">正在招募</button>
-      <button class="chip" data-v="ongoing">进行中</button>
-      <button class="chip" data-v="done">已结束</button>
+<div class="page task-layout">
+  <div class="task-main">
+    <!-- 状态标签 -->
+    <div class="chips-fade chips-fade-bg mt-12">
+      <div class="chips-scroll" id="statusChips">
+        <button class="chip active" data-v="">全部</button>
+        <button class="chip" data-v="recruiting">正在招募</button>
+        <button class="chip" data-v="ongoing">进行中</button>
+        <button class="chip" data-v="done">已结束</button>
+      </div>
     </div>
+    <!-- 任务列表 -->
+    <div id="taskList" class="mt-16"></div>
   </div>
 
-  <!-- 任务列表 -->
-  <div id="taskList" class="mt-16"></div>
+  <!-- 右侧侧边栏：短期近日任务 -->
+  <aside class="task-sidebar">
+    <div class="ts-card">
+      <div class="ts-head">
+        <span class="ts-bar"></span>短期近日任务
+      </div>
+      <div class="ts-sub">随时随地参与，快速完成</div>
+      <div id="quickTasks" class="ts-list"></div>
+    </div>
+  </aside>
 </div>
 
-<script src="js/photos.js?v=2"></script>
-<script src="js/images.js?v=2"></script>
-<script src="js/data.js?v=2"></script>
-<script src="js/storage.js?v=2"></script>
-<script src="js/common.js?v=2"></script>
+<script src="js/photos.js?v=4"></script>
+<script src="js/images.js?v=4"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/storage.js?v=4"></script>
+<script src="js/common.js?v=4"></script>
 <script>
   renderTabbar('task');
 
@@ -114,8 +126,31 @@
   });
 
   renderListWithLoading();
+
+  /* ---------------- 右侧短期近日任务 ---------------- */
+  const QUICK_TASKS = [
+    { id: 'q1', icon: 'camera', title: '上传身边的植物', desc: '拍一张你今天路过的植物照片，标注位置即可完成', reward: '+5 积分', color: '#6FA07A' },
+    { id: 'q2', icon: 'eye', title: '观察植物生长动向', desc: '记录你附近某棵植物本周的生长变化（展叶/开花/落叶）', reward: '+8 积分', color: '#C7A36B' },
+    { id: 'q3', icon: 'pin', title: '打卡一个新观测点', desc: '去一个你没去过的公园或街道，记录那里的植物', reward: '+10 积分', color: '#7B9BC0' },
+    { id: 'q4', icon: 'alert', title: '排查入侵物种', desc: '检查你小区周边是否有加拿大一枝黄花、火炬树等入侵物种', reward: '+12 积分', color: '#C0827D' },
+    { id: 'q5', icon: 'leaf', title: '记录今日落叶', desc: '秋天到了，拍一张今天踩到的落叶，标注树种', reward: '+5 积分', color: '#D4A056' },
+  ];
+
+  function renderQuickTasks() {
+    $('#quickTasks').innerHTML = QUICK_TASKS.map(q => `
+      <div class="qt-item" data-id="${q.id}">
+        <div class="qt-icon" style="background:${q.color}15;color:${q.color}">${icon(q.icon).replace('22" height="22','18" height="18')}</div>
+        <div class="qt-info">
+          <div class="qt-title">${esc(q.title)}</div>
+          <div class="qt-desc">${esc(q.desc)}</div>
+          <div class="qt-reward">${esc(q.reward)}</div>
+        </div>
+      </div>`).join('');
+    $$('#quickTasks .qt-item').forEach(item => {
+      item.addEventListener('click', () => navigate('record.html', '开始记录'));
+    });
+  }
+  renderQuickTasks();
 </script>
 </body>
 </html>
-
-

@@ -274,20 +274,17 @@ function renderTabbar(active) {
   if (active !== 'share') {
     const header = $('.header .header-inner') || $('.sub-header .header-inner');
     if (header) {
-      const sp = header.querySelector('.spacer');
-      if (sp) {
-        const profileBtn = document.createElement('a');
-        profileBtn.className = 'h-btn home-btn';
-        profileBtn.href = 'profile.html';
-        profileBtn.title = '我的';
-        profileBtn.innerHTML = icon('user');
-        profileBtn.addEventListener('click', e => {
-          e.preventDefault();
-          if (Auth.current()) navigate('profile.html', '我的');
-          else navigate('auth.html', '请先登录');
-        });
-        sp.insertAdjacentElement('afterend', profileBtn);
-      }
+      const profileBtn = document.createElement('a');
+      profileBtn.className = 'h-btn home-btn';
+      profileBtn.href = 'profile.html';
+      profileBtn.title = '我的';
+      profileBtn.innerHTML = icon('user');
+      profileBtn.addEventListener('click', e => {
+        e.preventDefault();
+        if (Auth.current()) navigate('profile.html', '我的');
+        else navigate('auth.html', '请先登录');
+      });
+      header.appendChild(profileBtn);
     }
   }
 }

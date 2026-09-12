@@ -17,6 +17,13 @@
     <div class="spacer"></div>
     <button class="h-btn strong" id="newPostBtn"></button>
   </div>
+  <div class="header-inner" style="padding-top:0">
+    <div class="search-bar" style="flex:1">
+      <span class="s-icon" id="sIcon"></span>
+      <input id="searchInput" type="search" placeholder="搜索动态 · 植物名 · 地点">
+      <button class="s-clear" id="sClear"></button>
+    </div>
+  </div>
 </header>
 
 <div class="page share-page">
@@ -31,7 +38,10 @@
 <script src="js/common.js?v=4"></script>
 <script>
   $('#newPostBtn').innerHTML = icon('plus') + ' 发动态';
+  $('#sIcon').innerHTML = icon('search');
+  $('#sClear').innerHTML = icon('close');
   renderTabbar('share');
+  let searchKw = '';
 
   /* ---------------- 内置动态（所有人进站可见） ---------------- */
   const SEED_FEED = [
@@ -51,6 +61,19 @@
 
   /* ---------------- 数据读写（localStorage 真实存储） ---------------- */
   function allPosts() { return [...UD.get('posts', []), ...SEED_FEED]; }
+  function filteredPosts() {
+    const all = allPosts();
+    if (!searchKw) return all;
+    const kw = searchKw.toLowerCase();
+    return all.filter(p => {
+      const plant = getPlant(p.plantId);
+      const pname = plant ? plant.name : '';
+      return (p.text || '').toLowerCase().includes(kw)
+        || (p.place || '').toLowerCase().includes(kw)
+        || (p.author || '').toLowerCase().includes(kw)
+        || pname.toLowerCase().includes(kw);
+    });
+  }
   function savePost(p) { const l = UD.get('posts', []); l.unshift(p); UD.set('posts', l); }
   function isLiked(id) { return !!UD.get('postLikes', {})[id]; }
   function toggleLike(id) { const l = UD.get('postLikes', {}); l[id] = l[id] ? 0 : 1; UD.set('postLikes', l); }
@@ -71,7 +94,7 @@
 
   /* ---------------- 渲染（小红书双列瀑布流） ---------------- */
   function renderFeed() {
-    const posts = allPosts();
+    const posts = filteredPosts();
     const list = $('#feedList');
     if (!posts.length) {
       list.innerHTML = `<div class="card card-pad">${emptyStateHTML({ title: '还没有人分享', desc: '成为第一个分享发现的人吧', small: true })}</div>`;
@@ -123,7 +146,17 @@
         e.stopPropagation();
         if (!Auth.current()) { requireLoginToast(); return; }
         toggleLike(p.id);
-        renderFeed();
+  /* 搜索 */
+  $('#searchInput').addEventListener('input', e => {
+    searchKw = e.target.value.trim();
+    $('#sClear').style.display = searchKw ? 'flex' : 'none';
+    renderFeed();
+  });
+  $('#sClear').addEventListener('click', () => {
+    $('#searchInput').value = ''; searchKw = ''; $('#sClear').style.display = 'none'; renderFeed();
+  });
+
+  renderFeed();
       });
     });
   }
