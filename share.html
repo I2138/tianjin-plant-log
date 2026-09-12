@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>分享广场 · 津城植物日志</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=3">
-  <link rel="stylesheet" href="css/pages.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/pages.css?v=4">
   <style>.sheet-panel{z-index:310!important}</style>
 </head>
 <body>
@@ -19,34 +19,34 @@
   </div>
 </header>
 
-<div class="page">
-  <div class="feed-banner">
-    <div class="fb-main">
-      <div class="fb-title">发现 · 分享 · 共建</div>
-      <div class="fb-desc">大家在哪里发现了什么植物，有什么感想，都在这里。</div>
-    </div>
-  </div>
-  <div id="feedList" class="mt-16"></div>
+<div class="page share-page">
+  <div id="feedList" class="xhs-grid"></div>
   <div id="feedFooter"></div>
 </div>
 
-<script src="js/photos.js?v=3"></script>
-<script src="js/images.js?v=3"></script>
-<script src="js/data.js?v=3"></script>
-<script src="js/storage.js?v=3"></script>
-<script src="js/common.js?v=3"></script>
+<script src="js/photos.js?v=4"></script>
+<script src="js/images.js?v=4"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/storage.js?v=4"></script>
+<script src="js/common.js?v=4"></script>
 <script>
   $('#newPostBtn').innerHTML = icon('plus') + ' 发动态';
   renderTabbar('share');
 
-  /* ---------------- 内置动态（示例） ---------------- */
+  /* ---------------- 内置动态（所有人进站可见） ---------------- */
   const SEED_FEED = [
-    { id: 'sf1', author: '海河漫步', time: '2 小时前', plantId: 1, place: '和平区 · 五大道睦南道', text: '睦南道这棵百年国槐今天拍到了满树新叶，透光看特别漂亮。城市里的古树就是会呼吸的历史。', likes: 26, comments: 4, imgs: ['p1_0.jpg'] },
-    { id: 'sf2', author: '津门花匠', time: '昨天 18:20', plantId: 22, place: '红桥区 · 北运河桃花堤', text: '桃花堤的碧桃盛开了！粉色的云压满枝头，路过的人都忍不住拍照。春日限定美景，值得专门跑一趟。', likes: 88, comments: 12, imgs: ['p22_0.jpg', 'p22_1.jpg'] },
-    { id: 'sf3', author: '柳絮飞时', time: '昨天 09:15', plantId: 29, place: '蓟州区 · 盘山磨盘柿沟', text: '盘山脚下的柿子林开始挂果了，磨盘柿个头真的大，像小灯笼一样。秋天来蓟州一定要尝一口霜柿。', likes: 45, comments: 7, imgs: ['p29_0.jpg'] },
-    { id: 'sf4', author: '五大道扫街', time: '3 天前', plantId: 17, place: '南开区 · 水上公园银杏道', text: '水上公园的银杏道已经开始变色，黄绿相间的过渡期其实比全黄更有层次感，推荐下周来打卡。', likes: 67, comments: 9, imgs: ['p17_0.jpg'] },
-    { id: 'sf5', author: '北宁晨练者', time: '4 天前', plantId: 43, place: '河北区 · 北宁公园', text: '北宁公园的樱花今年开了，虽然还不是盛花期，粉白色的花苞已经挂满枝头，晨练遛弯的好地方。', likes: 33, comments: 5, imgs: ['p43_0.jpg'] },
-    { id: 'sf6', author: '湿地观察员', time: '5 天前', plantId: 57, place: '宁河区 · 七里海湿地', text: '七里海的香蒲已经抽出腊肠花序，水鸟在芦苇丛里做窝。湿地生态修复效果肉眼可见，芦苇荡又回来了。', likes: 52, comments: 6, imgs: ['p57_0.jpg'] },
+    { id: 'sf1', author: '海河漫步', time: '2 小时前', plantId: 1, place: '和平区 · 五大道睦南道', text: '睦南道这棵百年国槐今天拍到了满树新叶，透光看特别漂亮。城市里的古树就是会呼吸的历史。', likes: 126, comments: 14, imgs: ['p1_0.jpg','p1_1.jpg'] },
+    { id: 'sf2', author: '津门花匠', time: '昨天 18:20', plantId: 22, place: '红桥区 · 北运河桃花堤', text: '桃花堤的碧桃盛开了！粉色的云压满枝头，路过的人都忍不住拍照。春日限定美景。', likes: 288, comments: 32, imgs: ['p22_0.jpg','p22_1.jpg'] },
+    { id: 'sf3', author: '柳絮飞时', time: '昨天 09:15', plantId: 29, place: '蓟州区 · 盘山磨盘柿沟', text: '盘山脚下的柿子林开始挂果了，磨盘柿个头真的大，像小灯笼一样。秋天来蓟州一定要尝一口霜柿。', likes: 145, comments: 17, imgs: ['p29_0.jpg'] },
+    { id: 'sf4', author: '五大道扫街', time: '3 天前', plantId: 17, place: '南开区 · 水上公园银杏道', text: '水上公园的银杏道已经开始变色，黄绿相间的过渡期其实比全黄更有层次感，推荐下周来打卡。', likes: 167, comments: 19, imgs: ['p17_0.jpg'] },
+    { id: 'sf5', author: '北宁晨练者', time: '4 天前', plantId: 43, place: '河北区 · 北宁公园', text: '北宁公园的樱花今年开了，粉白色的花苞已经挂满枝头，晨练遛弯的好地方。', likes: 133, comments: 15, imgs: ['p43_0.jpg'] },
+    { id: 'sf6', author: '湿地观察员', time: '5 天前', plantId: 57, place: '宁河区 · 七里海湿地', text: '七里海的香蒲已经抽出腊肠花序，水鸟在芦苇丛里做窝。湿地生态修复效果肉眼可见。', likes: 152, comments: 16, imgs: ['p57_0.jpg'] },
+    { id: 'sf7', author: '白蜡树下', time: '5 天前', plantId: 61, place: '南开区 · 水上公园', text: '水上公园的白玉兰开了，满树洁白如雪，花香清远。天津早春最早开花的乔木，值得专门来看。', likes: 98, comments: 11, imgs: ['p61_0.jpg'] },
+    { id: 'sf8', author: '绿园小记', time: '6 天前', plantId: 64, place: '河西区 · 友谊路', text: '友谊路的元宝枫秋叶红了！掌状五裂叶在阳光下透亮，翅果像元宝倒挂，太精致了。', likes: 112, comments: 8, imgs: ['p64_0.jpg'] },
+    { id: 'sf9', author: '盐碱地记录者', time: '1 周前', plantId: 70, place: '滨海新区 · 生态城', text: '滨海生态城的柽柳开花了，粉红色花穗在盐碱地上随风摇曳，一年三季开花不是吹的。', likes: 76, comments: 9, imgs: ['p70_0.jpg'] },
+    { id: 'sf10', author: '老城寻花', time: '1 周前', plantId: 72, place: '和平区 · 睦南道花园', text: '围栏上的蔷薇花墙开了，白色小花密集成片，蜜蜂嗡嗡地转。老洋房配花墙，五大道的标配浪漫。', likes: 189, comments: 23, imgs: ['p72_0.jpg'] },
+    { id: 'sf11', author: '盘山樵客', time: '2 周前', plantId: 73, place: '蓟州区 · 盘山景区', text: '盘山路边的黄刺玫满枝金黄，和翠绿的山坡对比太鲜明了。春天山里的颜色就是饱和。', likes: 85, comments: 6, imgs: ['p73_0.jpg'] },
+    { id: 'sf12', author: '津南菜农', time: '2 周前', plantId: 85, place: '津南区 · 咸水沽', text: '路边坡上的马蔺开了，蓝紫色的花在盐碱地上成片，叶子韧得能编绳。天津本地的铁杆花。', likes: 62, comments: 5, imgs: ['p85_0.jpg'] },
   ];
 
   /* ---------------- 数据读写（localStorage 真实存储） ---------------- */
@@ -60,77 +60,98 @@
     s[id] = [{ name: Auth.current().name, time: '刚刚', text: txt }, ...(s[id] || [])];
     UD.set('postComments', s);
   }
+  /* 内置评论（所有人可见） */
+  function seedComments(id) {
+    const map = {
+      sf1: [{ name: '柳絮飞时', time: '1 小时前', text: '这棵树的树冠形状太标准了，收藏了！' },{ name: '五大道扫街', time: '3 小时前', text: '周末路过拍了几张，确实状态很好。' }],
+      sf2: [{ name: '北宁晨练者', time: '昨天', text: '桃花堤值得专门跑一趟，太美了。' },{ name: '津门花匠', time: '昨天', text: '今年花量确实比去年大。' }],
+    };
+    return map[id] || [];
+  }
 
-  /* ---------------- 渲染动态流 ---------------- */
+  /* ---------------- 渲染（小红书双列瀑布流） ---------------- */
   function renderFeed() {
     const posts = allPosts();
     const list = $('#feedList');
     if (!posts.length) {
       list.innerHTML = `<div class="card card-pad">${emptyStateHTML({ title: '还没有人分享', desc: '成为第一个分享发现的人吧', small: true })}</div>`;
-      $('#feedFooter').innerHTML = '';
       return;
     }
     list.innerHTML = posts.map(p => {
       const plant = getPlant(p.plantId);
       const pname = plant ? plant.name : '未知植物';
-      const plat = plant ? plant.latin : '';
       const liked = isLiked(p.id);
       const cmts = myComments(p.id);
       const cmtCount = (p.comments || 0) + cmts.length;
-      const photos = (p.imgs || []).map((_, k) => `<div class="fp-img"><div class="img-box" style="width:100%;height:100%"><img alt=""></div></div>`).join('');
+      const photoHTML = (p.imgs && p.imgs.length)
+        ? `<div class="xhs-cover"><div class="img-box"><img alt=""></div></div>` : '';
       return `
-      <div class="feed-card" data-id="${p.id}">
-        <div class="fp-head">
-          <div class="fp-avatar">${avatar(p.author || '友', 38)}</div>
-          <div style="flex:1;min-width:0">
-            <div class="fp-name">${esc(p.author || '植物爱好者')}</div>
-            <div class="fp-meta">${esc(p.time)} · ${esc(p.place)}</div>
+      <div class="xhs-card" data-id="${p.id}">
+        ${photoHTML}
+        <div class="xhs-body">
+          <div class="xhs-text">${esc(p.text)}</div>
+          <div class="xhs-plant">${icon('leaf').replace('22" height="22','13" height="13')} ${esc(pname)}</div>
+          <div class="xhs-bottom">
+            <div class="xhs-author">
+              <span class="xhs-av">${avatar(p.author || '友', 22)}</span>
+              <span>${esc(p.author || '植物爱好者')}</span>
+            </div>
+            <div class="xhs-likes ${liked ? 'on' : ''}" data-act="like">
+              ${liked ? icon('heartFill') : icon('heart')} ${(p.likes || 0) + (liked ? 1 : 0)}
+            </div>
           </div>
-        </div>
-        <div class="fp-text">${esc(p.text)}</div>
-        ${photos ? `<div class="fp-imgs">${photos}</div>` : ''}
-        <div class="fp-plant">发现植物：<b>${esc(pname)}</b> <span class="fz-12 text-3">${esc(plat)}</span></div>
-        <div class="fp-actions">
-          <button class="fp-act ${liked ? 'on' : ''}" data-act="like">${liked ? icon('heartFill') : icon('heart')} ${(p.likes || 0) + (liked ? 1 : 0)}</button>
-          <button class="fp-act" data-act="cmt">${icon('comment')} ${cmtCount}</button>
         </div>
       </div>`;
     }).join('');
 
     /* 图片加载 */
-    list.querySelectorAll('.feed-card').forEach((card, i) => {
+    list.querySelectorAll('.xhs-card').forEach((card, i) => {
       const p = posts[i];
-      if (!p || !p.imgs || !p.imgs.length || !p.plantId) return;
-      const plant = getPlant(p.plantId);
-      card.querySelectorAll('.fp-img .img-box').forEach((box, k) => {
-        mountImg(box, plantPhoto(plant.id, k), { delay: 250 + k * 120 });
+      const box = card.querySelector('.xhs-cover .img-box');
+      if (box && p.imgs && p.imgs.length && p.plantId) {
+        const plant = getPlant(p.plantId);
+        mountImg(box, plantPhoto(plant.id, 0), { delay: 200 + i * 80 });
+      }
+      /* 点击打开详情 */
+      card.addEventListener('click', e => {
+        if (e.target.closest('[data-act]')) return;
+        openPostDetail(p);
       });
-    });
-
-    /* 点赞/评论 */
-    list.querySelectorAll('[data-act]').forEach(btn => {
-      btn.addEventListener('click', e => {
+      /* 点赞 */
+      const likeBtn = card.querySelector('[data-act="like"]');
+      if (likeBtn) likeBtn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.closest('.feed-card').dataset.id;
-        if (btn.dataset.act === 'like') {
-          if (!Auth.current()) { requireLoginToast(); return; }
-          toggleLike(id);
-          renderFeed();
-        } else {
-          openComments(id);
-        }
+        if (!Auth.current()) { requireLoginToast(); return; }
+        toggleLike(p.id);
+        renderFeed();
       });
     });
   }
 
-  /* ---------------- 评论面板 ---------------- */
-  function openComments(postId) {
-    const post = allPosts().find(p => p.id === postId);
-    if (!post) return;
-    const cmts = myComments(postId);
-    const all = [...cmts, ...(post.comments > 0 ? [{ name: '津门观察员', time: '2 天前', text: '感谢分享，下次路过也去看看！' }] : [])];
-    const { close, panel } = showSheet(`评论 · ${(post.comments || 0) + cmts.length} 条`, `
-      <div id="cmtList">${all.map(c => `
+  /* ---------------- 帖子详情（底部弹层） ---------------- */
+  function openPostDetail(p) {
+    const plant = getPlant(p.plantId);
+    const pname = plant ? plant.name : '未知植物';
+    const liked = isLiked(p.id);
+    const cmts = [...myComments(p.id), ...seedComments(p.id)];
+    const photos = (p.imgs || []).map((_, k) => `<div class="fp-img"><div class="img-box" style="width:100%;height:100%"><img alt=""></div></div>`).join('');
+    const { close, panel } = showSheet(`${esc(p.author)} 的分享`, `
+      <div class="fp-head" style="margin-bottom:12px">
+        <div class="fp-avatar">${avatar(p.author || '友', 38)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="fp-name">${esc(p.author || '植物爱好者')}</div>
+          <div class="fp-meta">${esc(p.time)} · ${esc(p.place)}</div>
+        </div>
+      </div>
+      <div class="fp-text">${esc(p.text)}</div>
+      ${photos ? `<div class="fp-imgs">${photos}</div>` : ''}
+      <div class="fp-plant">发现植物：<b>${esc(pname)}</b> <span class="fz-12 text-3">${plant ? esc(plant.latin) : ''}</span></div>
+      <div class="fp-actions" style="border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
+        <button class="fp-act ${liked ? 'on' : ''}" id="dtlLike">${liked ? icon('heartFill') : icon('heart')} ${(p.likes || 0) + (liked ? 1 : 0)}</button>
+        <button class="fp-act">${icon('comment')} ${(p.comments || 0) + cmts.length}</button>
+      </div>
+      <div class="section-title" style="margin-top:16px"><span class="st-bar"></span>评论<span class="st-more">${(p.comments || 0) + cmts.length} 条</span></div>
+      <div id="cmtList">${cmts.map(c => `
         <div class="comment-item">
           <div class="cm-avatar"><img src="${avatar(c.name, 34)}" alt=""></div>
           <div class="cm-body">
@@ -143,11 +164,24 @@
         <input class="form-input" id="cmtInput" placeholder="友善发言，分享你的看法…" style="flex:1">
         <button class="btn btn-primary btn-sm" id="cmtSend" style="flex:none">${icon('send')} 发布</button>
       </div>`);
+    /* 详情图片加载 */
+    if (p.imgs && p.imgs.length && p.plantId) {
+      const plant2 = getPlant(p.plantId);
+      panel.querySelectorAll('.fp-img .img-box').forEach((box, k) => {
+        mountImg(box, plantPhoto(plant2.id, k), { delay: 200 + k * 100 });
+      });
+    }
+    /* 详情点赞 */
+    panel.querySelector('#dtlLike').addEventListener('click', () => {
+      if (!Auth.current()) { close(); requireLoginToast(); return; }
+      toggleLike(p.id); close(); renderFeed();
+    });
+    /* 评论发布 */
     panel.querySelector('#cmtSend').addEventListener('click', () => {
       if (!Auth.current()) { close(); requireLoginToast(); return; }
       const txt = panel.querySelector('#cmtInput').value.trim();
       if (!txt) { showToast('评论内容不能为空'); return; }
-      addComment(postId, txt);
+      addComment(p.id, txt);
       close(); showToast('评论发布成功');
       renderFeed();
     });
@@ -185,9 +219,7 @@
     });
     panel.querySelector('#pAddPhoto').addEventListener('click', () => {
       const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'image/*';
-      inp.multiple = true;
+      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
       inp.onchange = () => {
         Array.from(inp.files).slice(0, 3 - picked.length).forEach(f => {
           const r = new FileReader();
@@ -217,8 +249,7 @@
       savePost({
         id: 'u' + Date.now(),
         plantId: Number(pickedPlant) || 0,
-        place, text,
-        imgs: picked,
+        place, text, imgs: picked,
         author: Auth.current().name,
         time: '刚刚', likes: 0, comments: 0,
       });

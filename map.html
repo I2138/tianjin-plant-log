@@ -10,6 +10,7 @@
   <!-- Leaflet 真实地图 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>.drawer-panel{z-index:310!important}.sheet-panel{z-index:310!important}</style>
+  <style>.leaflet-tooltip.map-label{background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.15);white-space:nowrap}.leaflet-tooltip.map-label::before{display:none}</style>
 </head>
 <body>
 
@@ -88,23 +89,25 @@
   }
 
   /* ---------------- 渲染点位（CircleMarker 小圆点） ---------------- */
+  const showLabels = () => !!(filter.type || filter.attr || filter.region);
   function renderDots() {
     if (!map || !_dotLayer) return;
     _dotLayer.clearLayers();
     const pts = currentPoints();
+    const labeling = showLabels();
     $('#mapEmpty').classList.toggle('hidden', pts.length > 0);
     if (!pts.length) {
       $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 暂无匹配点位，试试调整筛选`;
       return;
     }
-    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 已收录天津街道、公园、社区、河岸、街角的植物观测点位 <b>${pts.length}</b> 个`;
+    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 已收录天津街道、公园、社区、河岸、街角的植物观测点位 <b>${pts.length}</b> 个${labeling ? ' · 点击圆点查看详情' : ' · 点击筛选可查看标注'}`;
 
     pts.forEach(pt => {
       const p = getPlant(pt.plantId);
       if (!p) return;
       const [lat, lng] = pointLatLng(pt);
       const m = L.circleMarker([lat, lng], {
-        radius: 7,
+        radius: labeling ? 9 : 7,
         color: '#fff',
         weight: 1.5,
         fillColor: attrColor(p.attr),
@@ -117,11 +120,15 @@
           <div style="font-size:11px;color:#999;margin-top:2px">最近观测：${esc(pt.time)}</div>
           <a href="log-detail.html?id=dyn_${pt.id}" style="display:inline-block;margin-top:6px;font-size:12px;color:#4a7a55;font-weight:600">查看观察日志 →</a>
         </div>`, { closeButton: true });
+      /* 筛选后显示植物名标注 */
+      if (labeling) {
+        m.bindTooltip(esc(p.name), { permanent: true, direction: 'top', className: 'map-label', offset: [0, -8] });
+      }
       m.addTo(_dotLayer);
     });
 
     /* 自动适配视野（全量时不缩放，避免每次筛选都跳视野） */
-    if (pts.length && !filter.type && !filter.attr && !filter.region) {
+    if (pts.length && !labeling) {
       const latlngs = pts.map(pt => { const [a, b] = pointLatLng(pt); return [a, b]; });
       try { map.fitBounds(L.latLngBounds(latlngs).pad(0.1)); } catch (e) {}
     }
