@@ -753,6 +753,17 @@
   border: none; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
 }
 
+/* ================= 分享广场搜索栏 ================= */
+.share-search-bar {
+  position: sticky; top: var(--header-h); z-index: 80;
+  background: rgba(255,255,255,.95);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.share-search-bar .search-bar { background: var(--bg-soft); }
+@media (min-width: 1000px) { .share-search-bar { padding: 10px 32px; } }
+.share-search-bar .search-bar { border-radius: 999px; padding: 8px 14px; }
+
 /* ================= 分享广场（小红书风格） ================= */
 .share-page { padding: 0; max-width: 100%; }
 .xhs-grid {
@@ -810,7 +821,7 @@
 
 /* ================= 任务页双列布局 ================= */
 .task-layout { display: flex; gap: 0; align-items: flex-start; }
-.task-main { flex: 1; min-width: 0; max-width: 560px; }
+.task-main { flex: 1; min-width: 0; }
 .task-sidebar {
   position: sticky; top: calc(var(--header-h) + 14px);
   width: 260px; flex: none; padding: 14px 16px;
