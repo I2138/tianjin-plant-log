@@ -786,6 +786,8 @@
 .hpz-cover { width: 100%; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; margin: 8px 0; background: var(--bg-soft); }
 .hpz-cover .img-box { width: 100%; height: 100%; }
 .hpz-cover .img-box img { width: 100%; height: 100%; object-fit: cover; }
+.hpz-expand { margin-top: 4px; }
+.hpz-expand.hidden { display: none; }
 .hpz-plant { font-size: 11px; color: var(--primary-deep); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
 .hpz-actions { display: flex; gap: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 .hpz-act { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-3); }
@@ -799,8 +801,6 @@
   column-count: 2; column-gap: 8px;
   padding: 8px 8px 0;
 }
-@media (min-width: 600px) { .xhs-grid { column-count: 3; column-gap: 10px; padding: 10px 10px 0; } }
-@media (min-width: 1000px) { .xhs-grid { column-count: 4; column-gap: 12px; } }
 .xhs-card {
   break-inside: avoid; margin-bottom: 8px;
   background: #fff; border-radius: 12px; overflow: hidden;

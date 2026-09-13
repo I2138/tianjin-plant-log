@@ -75,12 +75,12 @@
 
   /* ---------------- 家养绿植分享与求助（所有人可见） ---------------- */
   const HOME_PLANTS = [
-    { id: 'hp1', type: 'share', author: '阳台园丁', avatarSeed: '阳台', time: '1 小时前', plantId: 50, place: '我家阳台', text: '栀子花终于开花了！养了两年第一次开，香味把整个客厅都熏甜了。诀窍就是酸性土+多晒。', likes: 42, comments: 8, imgs: ['p50_0.jpg'] },
-    { id: 'hp2', type: 'help', author: '新手养花', avatarSeed: '新手', time: '3 小时前', plantId: 89, place: '室内', text: '我家常春藤叶子发黄掉落，放在北窗边，浇水也不多。是光照不够还是浇水有问题？求大神指点。', likes: 5, comments: 12, imgs: ['p89_0.jpg'] },
-    { id: 'hp3', type: 'share', author: '多肉爱好者', avatarSeed: '多肉', time: '昨天', plantId: 80, place: '窗台', text: '玉簪在北阳台长得太好了，叶面油亮，今年夏天还开了一串白花。耐阴植物的首选。', likes: 28, comments: 4, imgs: ['p80_0.jpg'] },
-    { id: 'hp4', type: 'help', author: '绿萝杀手', avatarSeed: '绿萝', time: '昨天', plantId: 53, place: '客厅', text: '金银花盆栽叶子卷曲有蚜虫，不想打农药，有没有环保的方法除虫？', likes: 3, comments: 15, imgs: ['p53_0.jpg'] },
-    { id: 'hp5', type: 'share', author: '厨房花园', avatarSeed: '厨房', time: '2 天前', plantId: 36, place: '阳台菜箱', text: '阳台上种的香椿芽冒了！春天自己采香椿芽炒鸡蛋，从阳台到餐桌零距离。', likes: 56, comments: 7, imgs: ['p36_0.jpg'] },
-    { id: 'hp6', type: 'share', author: '北窗花友', avatarSeed: '北窗', time: '3 天前', plantId: 79, place: '北阳台', text: '鸢尾在北阳台也开花了，蓝紫色花朵特别上照。耐阴草本真的省心。', likes: 31, comments: 3, imgs: ['p79_0.jpg'] },
+    { id: 'hp1', type: 'share', author: '阳台园丁', avatarSeed: '阳台', time: '1 小时前', plantId: 50, place: '我家阳台', text: '栀子花终于开花了！养了两年第一次开，香味把整个客厅都熏甜了。诀窍就是酸性土+多晒。', likes: 42, comments: 8, imgs: ['images/plants/hp_gardenia.jpg'] },
+    { id: 'hp2', type: 'help', author: '新手养花', avatarSeed: '新手', time: '3 小时前', plantId: 89, place: '室内', text: '我家常春藤叶子发黄掉落，放在北窗边，浇水也不多。是光照不够还是浇水有问题？求大神指点。', likes: 5, comments: 12, imgs: ['images/plants/hp_ivy.jpg'] },
+    { id: 'hp3', type: 'share', author: '多肉爱好者', avatarSeed: '多肉', time: '昨天', plantId: 80, place: '窗台', text: '玉簪在北阳台长得太好了，叶面油亮，今年夏天还开了一串白花。耐阴植物的首选。', likes: 28, comments: 4, imgs: ['images/plants/hp_hosta.jpg'] },
+    { id: 'hp4', type: 'help', author: '绿萝杀手', avatarSeed: '绿萝', time: '昨天', plantId: 53, place: '客厅', text: '金银花盆栽叶子卷曲有蚜虫，不想打农药，有没有环保的方法除虫？', likes: 3, comments: 15, imgs: ['images/plants/hp_honeysuckle.jpg'] },
+    { id: 'hp5', type: 'share', author: '厨房花园', avatarSeed: '厨房', time: '2 天前', plantId: 36, place: '阳台菜箱', text: '阳台上种的香椿芽冒了！春天自己采香椿芽炒鸡蛋，从阳台到餐桌零距离。', likes: 56, comments: 7, imgs: ['images/plants/hp_toon.jpg'] },
+    { id: 'hp6', type: 'share', author: '北窗花友', avatarSeed: '北窗', time: '3 天前', plantId: 79, place: '北阳台', text: '鸢尾在北阳台也开花了，蓝紫色花朵特别上照。耐阴草本真的省心。', likes: 31, comments: 3, imgs: ['images/plants/hp_iris.jpg'] },
   ];
 
   function renderHomePlants() {
@@ -93,7 +93,7 @@
       const pname = plant ? plant.name : '绿植';
       const isHelp = p.type === 'help';
       const av = p.avatarSeed || p.author || '友';
-      const cover = (p.imgs && p.imgs.length) ? `<div class="hpz-cover"><div class="img-box"><img alt=""></div></div>` : '';
+      const hasImg = p.imgs && p.imgs.length;
       return `
       <div class="hpz-card" data-id="${p.id}">
         <div class="hpz-card-head">
@@ -105,28 +105,35 @@
           <span class="hpz-badge ${isHelp ? 'help' : 'share'}">${isHelp ? '求助' : '分享'}</span>
         </div>
         <div class="hpz-text">${esc(p.text)}</div>
-        ${cover}
-        <div class="hpz-plant">${icon('leaf').replace('22" height="22','12" height="12')} ${esc(pname)}</div>
+        <div class="hpz-plant">${icon('leaf').replace('22" height="22','12" height="12')} ${esc(pname)}${hasImg ? ' · 点击展开看图' : ''}</div>
+        <div class="hpz-expand hidden" data-loaded="0"></div>
         <div class="hpz-actions">
           <span class="hpz-act">${icon('heart')} ${p.likes}</span>
           <span class="hpz-act">${icon('comment')} ${p.comments}</span>
         </div>
       </div>`;
     }).join('');
-    /* 封面图加载 */
+    /* 点击展开/收起图片 */
     host.querySelectorAll('.hpz-card').forEach((card, i) => {
       const p = list[i];
-      if (!p || !p.imgs || !p.imgs.length || !p.plantId) return;
-      const plant = getPlant(p.plantId);
-      const box = card.querySelector('.hpz-cover .img-box');
-      if (box) mountImg(box, plantPhoto(plant.id, 0), { delay: 200 + i * 80 });
-    });
-    host.querySelectorAll('.hpz-card').forEach(card => {
+      if (!p) return;
       card.addEventListener('click', () => {
-        const id = card.dataset.id;
-        const p = HOME_PLANTS.find(x => x.id === id);
-        if (!p) return;
-        openPostDetail({ ...p, imgs: p.imgs || [], plantId: p.plantId });
+        const exp = card.querySelector('.hpz-expand');
+        if (exp.classList.contains('hidden')) {
+          /* 展开 */
+          exp.classList.remove('hidden');
+          if (exp.dataset.loaded === '0') {
+            exp.dataset.loaded = '1';
+            if (p.imgs) {
+              exp.innerHTML = p.imgs.map(src => `<div class="hpz-cover"><img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`).join('');
+            }
+          }
+          card.querySelector('.hpz-plant').innerHTML = card.querySelector('.hpz-plant').innerHTML.replace('点击展开看图', '点击收起');
+        } else {
+          /* 收起 */
+          exp.classList.add('hidden');
+          card.querySelector('.hpz-plant').innerHTML = card.querySelector('.hpz-plant').innerHTML.replace('点击收起', '点击展开看图');
+        }
       });
     });
   }
