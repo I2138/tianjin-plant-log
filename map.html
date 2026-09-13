@@ -5,12 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>植物分布地图 · 津城植物日志</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=3">
-  <link rel="stylesheet" href="css/pages.css?v=3">
-  <!-- Leaflet 真实地图 -->
+  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/pages.css?v=5">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>.drawer-panel{z-index:310!important}.sheet-panel{z-index:310!important}</style>
-  <style>.leaflet-tooltip.map-label{background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.15);white-space:nowrap}.leaflet-tooltip.map-label::before{display:none}</style>
+  <style>
+    .drawer-panel{z-index:310!important}.sheet-panel{z-index:310!important}
+    .leaflet-tooltip.map-label{background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.15);white-space:nowrap}.leaflet-tooltip.map-label::before{display:none}
+    /* 地图偏左布局 */
+    .map-layout{display:flex;height:calc(100vh - var(--header-h) - var(--nav-h));}
+    .map-left{flex:1;position:relative;min-width:0;}
+    .map-left #map{width:100%;height:100%;}
+    /* 右侧详情面板 */
+    .map-side{width:360px;flex:none;background:#fff;border-left:1px solid var(--line);overflow-y:auto;display:none;}
+    @media(min-width:700px){.map-side{display:block;}}
+    .map-side-close{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:var(--bg-soft);border:none;display:flex;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;z-index:10;}
+    .ms-empty{padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px;}
+    .ms-detail{padding:16px 18px;border-bottom:1px solid var(--line);}
+    .ms-detail-title{font-size:16px;font-weight:800;color:var(--text);}
+    .ms-detail-latin{font-size:12px;font-style:italic;color:var(--text-3);margin-top:2px;}
+    .ms-detail-tags{display:flex;gap:6px;margin-top:8px;}
+    .ms-detail-row{font-size:12.5px;color:var(--text-2);margin-top:8px;display:flex;align-items:center;gap:5px;}
+    .ms-detail-desc{font-size:12.5px;color:var(--text-2);line-height:1.7;margin-top:10px;background:var(--bg-soft);border-radius:10px;padding:10px 12px;}
+    .ms-section-title{font-size:13px;font-weight:700;padding:12px 18px 8px;display:flex;align-items:center;gap:6px;}
+    .ms-section-bar{width:4px;height:14px;border-radius:2px;background:var(--primary);}
+    .ms-photos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 18px 18px;}
+    .ms-photo{aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bg-soft);}
+    .ms-photo img{width:100%;height:100%;object-fit:cover;}
+    .ms-checkin{padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;}
+    .ms-ci-item{background:var(--bg-soft);border-radius:12px;padding:12px;}
+    .ms-ci-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .ms-ci-av{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;}
+    .ms-ci-av img{width:100%;height:100%;object-fit:cover;}
+    .ms-ci-name{font-size:12px;font-weight:600;}
+    .ms-ci-time{font-size:10px;color:var(--text-3);}
+    .ms-ci-text{font-size:12.5px;color:var(--text-2);line-height:1.6;}
+    /* 手机端面板 */
+    .map-mobile-panel{position:fixed;bottom:0;left:0;right:0;z-index:300;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);max-height:70vh;overflow-y:auto;display:none;transform:translateY(100%);transition:transform .3s ease;}
+    .map-mobile-panel.show{transform:translateY(0);display:block;}
+    @media(max-width:699px){.map-mobile-panel{display:block;}}
+    .map-mobile-mask{position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .3s;display:none;}
+    .map-mobile-mask.show{opacity:1;pointer-events:all;}
+    @media(max-width:699px){.map-mobile-mask{display:block;}}
+  </style>
 </head>
 <body>
 
@@ -22,57 +58,64 @@
   </div>
 </header>
 
-<div class="page">
-  <div class="realmap-wrap">
+<div class="map-layout">
+  <div class="map-left">
     <div id="map"></div>
-    <!-- 初始化骨架 -->
     <div class="map-loading" id="mapLoading">
       <div class="spinner"></div>
       <span>真实地图加载中…</span>
     </div>
-    <!-- 空状态 -->
     <div class="map-empty hidden" id="mapEmpty">
-      <div class="me-title">当前筛选条件下暂无观测点位</div>
-      <div style="font-size:12px;color:var(--text-3)">试试放宽筛选范围</div>
+      <div class="me-title">暂无匹配点位</div>
     </div>
     <div class="map-foot-note" id="footNote"></div>
     <div class="map-legend">
-      <span class="lg"><i style="background:#6FA07A"></i>本土植物</span>
-      <span class="lg"><i style="background:#C7A36B"></i>外来植物</span>
-      <span class="lg"><i style="background:#C0827D"></i>入侵植物</span>
-      <span class="lg" style="margin-left:auto">点击圆点查看观测详情 · 滚轮缩放</span>
+      <span class="lg"><i style="background:#6FA07A"></i>本土</span>
+      <span class="lg"><i style="background:#C7A36B"></i>外来</span>
+      <span class="lg"><i style="background:#C0827D"></i>入侵</span>
+      <span class="lg" style="margin-left:auto">点击圆点查看详情</span>
     </div>
   </div>
+
+  <!-- 桌面端右侧面板 -->
+  <aside class="map-side" id="mapSide">
+    <button class="map-side-close" id="sideClose"></button>
+    <div id="sideContent">
+      <div class="ms-empty">点击地图上的圆点查看植物详情和打卡分享</div>
+    </div>
+  </aside>
+</div>
+
+<!-- 手机端底部弹出面板 -->
+<div class="map-mobile-mask" id="mobileMask"></div>
+<div class="map-mobile-panel" id="mobilePanel">
+  <div style="width:40px;height:4px;border-radius:4px;background:var(--line);margin:8px auto;"></div>
+  <div id="mobileContent"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/photos.js?v=3"></script>
-<script src="js/images.js?v=3"></script>
-<script src="js/data.js?v=3"></script>
-<script src="js/storage.js?v=3"></script>
-<script src="js/common.js?v=3"></script>
+<script src="js/photos.js?v=5"></script>
+<script src="js/images.js?v=5"></script>
+<script src="js/data.js?v=5"></script>
+<script src="js/storage.js?v=5"></script>
+<script src="js/common.js?v=5"></script>
 <script>
   $('#fIcon').innerHTML = icon('filter');
+  $('#sideClose').innerHTML = icon('close');
   renderTabbar('map');
 
-  /* ---------------- 状态 ---------------- */
   const filter = { type: '', attr: '', region: '' };
-  let map = null, locMarker = null, locCircle = null, watchId = null, _dotLayer = null;
+  let map = null, _dotLayer = null;
 
-  /* ---------------- 初始化真实地图（Leaflet + 高德瓦片） ---------------- */
   function initMap() {
     map = L.map('map', {
-      center: [39.12, 117.18],
-      zoom: 11,
-      minZoom: 8,
-      maxZoom: 18,
-      zoomControl: true,
-      attributionControl: false,
+      center: [39.13, 117.20],
+      zoom: 12,
+      minZoom: 8, maxZoom: 18,
+      zoomControl: true, attributionControl: false,
     });
-    /* 高德矢量瓦片（无需 key，中文标注） */
     L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
-      subdomains: ['1', '2', '3', '4'],
-      maxZoom: 18,
+      subdomains: ['1','2','3','4'], maxZoom: 18,
     }).addTo(map);
     _dotLayer = L.layerGroup().addTo(map);
     renderDots();
@@ -81,6 +124,7 @@
   function currentPoints() {
     return MAP_POINTS.filter(pt => {
       const p = getPlant(pt.plantId);
+      if (!p) return false;
       if (filter.type && p.type !== filter.type) return false;
       if (filter.attr && p.attr !== filter.attr) return false;
       if (filter.region && pt.region !== filter.region) return false;
@@ -88,19 +132,16 @@
     });
   }
 
-  /* ---------------- 渲染点位（CircleMarker 小圆点） ---------------- */
   const showLabels = () => !!(filter.type || filter.attr || filter.region);
+
   function renderDots() {
     if (!map || !_dotLayer) return;
     _dotLayer.clearLayers();
     const pts = currentPoints();
     const labeling = showLabels();
     $('#mapEmpty').classList.toggle('hidden', pts.length > 0);
-    if (!pts.length) {
-      $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 暂无匹配点位，试试调整筛选`;
-      return;
-    }
-    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16', '11" height="11"')} 已收录天津街道、公园、社区、河岸、街角的植物观测点位 <b>${pts.length}</b> 个${labeling ? ' · 点击圆点查看详情' : ' · 点击筛选可查看标注'}`;
+    if (!pts.length) { $('#footNote').textContent = '暂无匹配点位'; return; }
+    $('#footNote').innerHTML = `${icon('pin').replace('16" height="16','11" height="11"')} 共 <b>${pts.length}</b> 个点位${labeling ? ' · 点击圆点查看详情' : ' · 点击筛选可查看标注'}`;
 
     pts.forEach(pt => {
       const p = getPlant(pt.plantId);
@@ -108,33 +149,101 @@
       const [lat, lng] = pointLatLng(pt);
       const m = L.circleMarker([lat, lng], {
         radius: labeling ? 9 : 7,
-        color: '#fff',
-        weight: 1.5,
-        fillColor: attrColor(p.attr),
-        fillOpacity: 0.95,
+        color: '#fff', weight: 1.5,
+        fillColor: attrColor(p.attr), fillOpacity: 0.95,
       });
-      m.bindPopup(`
-        <div style="min-width:150px">
-          <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(p.name)} <span style="font-size:11px;color:${attrColor(p.attr)}">${attrLabel(p.attr)}</span></div>
-          <div style="font-size:12px;color:#666">${esc(pt.region)}区 · ${esc(pt.place)}</div>
-          <div style="font-size:11px;color:#999;margin-top:2px">最近观测：${esc(pt.time)}</div>
-          <a href="log-detail.html?id=dyn_${pt.id}" style="display:inline-block;margin-top:6px;font-size:12px;color:#4a7a55;font-weight:600">查看观察日志 →</a>
-        </div>`, { closeButton: true });
-      /* 筛选后显示植物名标注 */
-      if (labeling) {
-        m.bindTooltip(esc(p.name), { permanent: true, direction: 'top', className: 'map-label', offset: [0, -8] });
-      }
+      if (labeling) m.bindTooltip(esc(p.name), { permanent: true, direction: 'top', className: 'map-label', offset: [0, -8] });
+      m.on('click', () => openSidePanel(pt));
       m.addTo(_dotLayer);
     });
-
-    /* 自动适配视野（全量时不缩放，避免每次筛选都跳视野） */
     if (pts.length && !labeling) {
-      const latlngs = pts.map(pt => { const [a, b] = pointLatLng(pt); return [a, b]; });
-      try { map.fitBounds(L.latLngBounds(latlngs).pad(0.1)); } catch (e) {}
+      const ll = pts.map(pt => { const [a,b] = pointLatLng(pt); return [a,b]; });
+      try { map.fitBounds(L.latLngBounds(ll).pad(0.1)); } catch(e) {}
     }
   }
 
-  /* ---------------- 筛选抽屉 ---------------- */
+  /* ---------------- 右侧面板内容 ---------------- */
+  function panelHTML(pt) {
+    const p = getPlant(pt.plantId);
+    if (!p) return '<div class="ms-empty">未找到植物信息</div>';
+    /* 找同植物的打卡分享 */
+    const checkins = MAP_POINTS.filter(x => x.plantId === pt.plantId && x.id !== pt.id).slice(0, 4);
+    const seedCmts = [
+      { name: '海河漫步', time: '2 天前', text: `这棵${p.name}长势很好，路过拍了几张。` },
+      { name: '津门花匠', time: '3 天前', text: `附近有好几棵${p.name}，这片绿化确实用心了。` },
+    ];
+    const photos = [plantPhoto(p.id, 0), plantPhoto(p.id, 1), plantPhoto(p.id, 2)].filter(Boolean);
+
+    return `
+      <div class="ms-detail">
+        <div class="ms-detail-title">${esc(p.name)} <span class="tag ${attrClass(p.attr)}" style="font-size:10px;padding:2px 8px">${attrLabel(p.attr)}</span></div>
+        <div class="ms-detail-latin">${esc(p.latin)}</div>
+        <div class="ms-detail-row">${icon('pin').replace('16" height="16','12" height="12')} ${esc(pt.region)}区 · ${esc(pt.place)}</div>
+        <div class="ms-detail-row">${icon('clock')} 最近观测：${esc(pt.time)}</div>
+        <div class="ms-detail-row">${icon('leaf')} ${esc(p.family)} · ${esc(p.type)} · ${p.pointCount} 个点位</div>
+        <div class="ms-detail-desc">${esc(p.form)}</div>
+        <a href="log-detail.html?id=dyn_${pt.id}" style="display:inline-block;margin-top:10px;font-size:12px;color:var(--primary-deep);font-weight:600">查看完整观察日志 →</a>
+      </div>
+      <div class="ms-section-title"><span class="ms-section-bar"></span>打卡分享</div>
+      <div class="ms-photos">
+        ${photos.map(src => `<div class="ms-photo"><div class="img-box" style="width:100%;height:100%"><img alt=""></div></div>`).join('')}
+      </div>
+      <div class="ms-checkin">
+        ${seedCmts.map(c => `
+          <div class="ms-ci-item">
+            <div class="ms-ci-head">
+              <div class="ms-ci-av"><img src="${avatar(c.name, 28)}" alt=""></div>
+              <div>
+                <div class="ms-ci-name">${esc(c.name)}</div>
+                <div class="ms-ci-time">${esc(c.time)}</div>
+              </div>
+            </div>
+            <div class="ms-ci-text">${esc(c.text)}</div>
+          </div>`).join('')}
+        ${checkins.length ? checkins.map(cp => {
+          const cp2 = getPlant(cp.plantId);
+          return `
+          <div class="ms-ci-item">
+            <div class="ms-ci-head">
+              <div class="ms-ci-av"><img src="${avatar(cp.region + '观察', 28)}" alt=""></div>
+              <div>
+                <div class="ms-ci-name">${esc(cp.region)}区观测点</div>
+                <div class="ms-ci-time">${esc(cp.time)} · ${esc(cp.place)}</div>
+              </div>
+            </div>
+            <div class="ms-ci-text">同种${esc(p.name)}在${esc(cp.region)}区${esc(cp.place)}也有记录。</div>
+          </div>`;
+        }).join('') : ''}
+      </div>
+    `;
+  }
+
+  function openSidePanel(pt) {
+    const html = panelHTML(pt);
+    /* 桌面端右侧 */
+    $('#sideContent').innerHTML = html;
+    $('#mapSide').scrollTop = 0;
+    /* 加载照片 */
+    const p = getPlant(pt.plantId);
+    if (p) {
+      document.querySelectorAll('#sideContent .ms-photo .img-box').forEach((box, i) => {
+        mountImg(box, plantPhoto(p.id, i), { delay: 100 + i * 80 });
+      });
+    }
+    /* 手机端底部弹层 */
+    $('#mobileContent').innerHTML = html;
+    document.querySelectorAll('#mobileContent .ms-photo .img-box').forEach((box, i) => {
+      if (p) mountImg(box, plantPhoto(p.id, i), { delay: 100 + i * 80 });
+    });
+    $('#mobilePanel').classList.add('show');
+    $('#mobileMask').classList.add('show');
+  }
+
+  /* 关闭面板 */
+  $('#sideClose').addEventListener('click', () => { $('#sideContent').innerHTML = '<div class="ms-empty">点击地图上的圆点查看植物详情和打卡分享</div>'; });
+  $('#mobileMask').addEventListener('click', () => { $('#mobilePanel').classList.remove('show'); $('#mobileMask').classList.remove('show'); });
+
+  /* ---------------- 筛选 ---------------- */
   $('#filterBtn').addEventListener('click', () => {
     showDrawer({
       title: '点位筛选',
@@ -149,50 +258,28 @@
         filter.region = state.region[0] || '';
         renderDots();
       },
-      onReset() {
-        filter.type = ''; filter.attr = ''; filter.region = '';
-      },
+      onReset() { filter.type = ''; filter.attr = ''; filter.region = ''; },
     });
   });
 
-  /* ---------------- 真实定位（跟随移动） ---------------- */
+  /* ---------------- 定位 ---------------- */
   function startLocation() {
-    if (!navigator.geolocation) { showToast('当前浏览器不支持定位'); return; }
-    const ok = pos => {
+    if (!navigator.geolocation) return;
+    let lm = null, lc = null;
+    navigator.geolocation.watchPosition(pos => {
       const { latitude, longitude, accuracy } = pos.coords;
-      if (!locMarker) {
-        locMarker = L.marker([latitude, longitude], { zIndexOffset: 1000 }).addTo(map);
-        locMarker.bindPopup('<b>我的位置</b>').openPopup();
-        locCircle = L.circle([latitude, longitude], { radius: accuracy || 50, color: '#4a7a5a', fillColor: '#4a7a5a', fillOpacity: .12, weight: 1 }).addTo(map);
-      } else {
-        locMarker.setLatLng([latitude, longitude]);
-        locCircle.setLatLng([latitude, longitude]);
-        locCircle.setRadius(accuracy || 50);
-      }
-      map.setView([latitude, longitude], 14);
-      showToast('已定位到你的真实位置，移动时会持续更新');
-    };
-    const err = () => showToast('定位失败：请检查浏览器定位权限后重试');
-    watchId = navigator.geolocation.watchPosition(ok, err, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
+      if (!lm) {
+        lm = L.marker([latitude, longitude], { zIndexOffset: 1000 }).addTo(map);
+        lc = L.circle([latitude, longitude], { radius: accuracy || 50, color: '#4a7a5a', fillColor: '#4a7a5a', fillOpacity: .12, weight: 1 }).addTo(map);
+      } else { lm.setLatLng([latitude, longitude]); lc.setLatLng([latitude, longitude]); lc.setRadius(accuracy || 50); }
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
   }
 
   /* ---------------- 初始化 ---------------- */
   setTimeout(() => {
     $('#mapLoading').classList.add('hidden');
     initMap();
-    /* 若浏览器拒绝定位不阻塞地图展示 */
-    try { startLocation(); } catch (e) {}
-    const target = qs('point');
-    if (target) {
-      const pt = getPoint(target);
-      if (pt) {
-        const [lat, lng] = pointLatLng(pt);
-        setTimeout(() => {
-          map.setView([lat, lng], 15);
-          L.circleMarker([lat, lng], { radius: 10, color: '#E07A5F', weight: 2, fillColor: '#E07A5F', fillOpacity: .4 }).addTo(map);
-        }, 600);
-      }
-    }
+    try { startLocation(); } catch(e) {}
   }, 400);
 </script>
 </body>
