@@ -270,8 +270,8 @@ function renderTabbar(active) {
       ${icon(it.ic)}<span>${it.label}</span></a>`).join('')}</div>`;
   document.body.appendChild(bar);
 
-  /* 右上角注入"我的"入口（分享页本身不注入，其余所有页面都注入） */
-  if (active !== 'share') {
+  /* 右上角注入"我的"入口（所有页面都注入） */
+  {
     const header = $('.header .header-inner') || $('.sub-header .header-inner');
     if (header) {
       const profileBtn = document.createElement('a');

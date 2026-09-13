@@ -41,7 +41,7 @@
     .ms-ci-text{font-size:12.5px;color:var(--text-2);line-height:1.6;}
     /* 手机端面板 */
     .map-mobile-panel{position:fixed;bottom:0;left:0;right:0;z-index:300;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);max-height:70vh;overflow-y:auto;display:none;transform:translateY(100%);transition:transform .3s ease;}
-    .map-mobile-panel.show{transform:translateY(0);display:block;}
+    .map-mobile-panel.show{transform:translateY(0);}
     @media(max-width:699px){.map-mobile-panel{display:block;}}
     .map-mobile-mask{position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .3s;display:none;}
     .map-mobile-mask.show{opacity:1;pointer-events:all;}
@@ -50,7 +50,7 @@
 </head>
 <body>
 
-<header class="header">
+<header class="header home-header">
   <div class="header-inner">
     <div class="page-title">植物分布地图</div>
     <div class="spacer"></div>
